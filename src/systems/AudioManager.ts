@@ -9,6 +9,10 @@ let currentMusic: Phaser.Sound.BaseSound | undefined;
 let currentKey: string | undefined;
 let pendingKey: string | undefined;
 
+export function getCurrentMusic(): Phaser.Sound.BaseSound | undefined {
+  return currentMusic;
+}
+
 export class AudioManager {
   constructor(private scene: Phaser.Scene) {}
 
@@ -26,18 +30,35 @@ export class AudioManager {
       music.play();
       currentMusic = music;
       currentKey = key;
+      const setVolume = (v: number) => {
+        // The track may have been replaced (and destroyed) while fading in.
+        if (currentMusic === music) (music as Phaser.Sound.WebAudioSound).setVolume?.(v);
+      };
       this.scene.tweens.addCounter({
         from: 0.2,
         to: 1,
         duration: AUDIO.musicFadeMs,
-        onUpdate: (tween) => (music as Phaser.Sound.WebAudioSound).setVolume?.(AUDIO.musicVolume * tween.getValue()!),
-        onStop: () => (music as Phaser.Sound.WebAudioSound).setVolume?.(AUDIO.musicVolume),
+        onUpdate: (tween) => setVolume(AUDIO.musicVolume * tween.getValue()!),
+        onStop: () => setVolume(AUDIO.musicVolume),
       });
     };
 
     // Browsers only allow audio after a user gesture; start as soon as that happens.
     if (this.scene.sound.locked) this.scene.sound.once(Phaser.Sound.Events.UNLOCKED, start);
     else start();
+  }
+
+  /** Speeds the current track up or down, e.g. for the boss's second phase. */
+  setMusicRate(rate: number): void {
+    (currentMusic as Phaser.Sound.WebAudioSound | undefined)?.setRate?.(rate);
+  }
+
+  stopMusic(): void {
+    currentMusic?.stop();
+    currentMusic?.destroy();
+    currentMusic = undefined;
+    currentKey = undefined;
+    pendingKey = undefined;
   }
 
   sfx(key: string, volume = 1): void {

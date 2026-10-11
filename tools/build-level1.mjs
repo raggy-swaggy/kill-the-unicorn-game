@@ -42,13 +42,24 @@ function section(name, width, opts, build) {
       s.objects.push({ type, name, x: (s.offset + x) * T + T / 2, y: (y + 1) * T, props });
     },
     walls() { api.block(0, 0, 1, 10); api.block(width - 1, 0, 1, 10); },
+    /** Platform that switches on and off with the beat. Pattern: one char per beat, 1 = solid. x/y = left edge, top. */
+    beatPlatform(x0, y, w, pattern) {
+      s.objects.push({ type: 'beat-platform', name: '', x: (s.offset + x0) * T, y: y * T, props: { pattern, tiles: w } });
+    },
+    /** Spikes on the ground row that strike with the beat. Pattern: 1 = extended. */
+    beatSpikes(x0, x1, pattern, row = 10) {
+      for (let x = x0; x <= x1; x++) {
+        s.ground.push([s.offset + x, row, 0]);
+        s.objects.push({ type: 'beat-trap', name: '', x: (s.offset + x) * T, y: row * T, props: { pattern } });
+      }
+    },
   };
   build(api);
 }
 
 // ---------------------------------------------------------------------------
 // 1. Neon arcade at night: tutorial pace, ends at the cursed cabinet.
-section('arcade', 100, { title: '1-1 NEON ARCADE', tileset: 'arcade', music: 'music-arcade', background: 'arcade', bpm: 140 }, (a) => {
+section('arcade', 100, { title: '1-1 NEON ARCADE', tileset: 'arcade', music: 'music-arcade', background: 'arcade' }, (a) => {
   a.walls();
   a.ent('player-spawn', 3, 9);
   a.floor(0, 22);
@@ -91,7 +102,7 @@ section('arcade', 100, { title: '1-1 NEON ARCADE', tileset: 'arcade', music: 'mu
 
 // ---------------------------------------------------------------------------
 // 2. Data highway: loading bars and windows over the void, pop-ups and cursors.
-section('datahighway', 130, { title: '1-2 DATA HIGHWAY', tileset: 'datahighway', music: 'music-datahighway', background: 'datahighway', bpm: 136 }, (a) => {
+section('datahighway', 130, { title: '1-2 DATA HIGHWAY', tileset: 'datahighway', music: 'music-datahighway', background: 'datahighway' }, (a) => {
   a.walls();
   a.ent('spawn', 3, 9, {}, 'datahighway-start');
   a.floor(0, 12);
@@ -138,8 +149,8 @@ section('datahighway', 130, { title: '1-2 DATA HIGHWAY', tileset: 'datahighway',
 });
 
 // ---------------------------------------------------------------------------
-// 3. Occult catacombs: spikes, candles, cursed cards. Beat-synced platforms follow in milestone 4.
-section('catacombs', 130, { title: '1-3 CURSED CATACOMBS', tileset: 'catacombs', music: 'music-catacombs', background: 'catacombs', bpm: 140 }, (a) => {
+// 3. Occult catacombs: spikes, candles, cursed cards, platforms and traps that follow the beat.
+section('catacombs', 130, { title: '1-3 CURSED CATACOMBS', tileset: 'catacombs', music: 'music-catacombs', background: 'catacombs' }, (a) => {
   a.walls();
   a.ent('spawn', 3, 9, {}, 'catacombs-start');
   a.floor(0, 15);
@@ -159,14 +170,15 @@ section('catacombs', 130, { title: '1-3 CURSED CATACOMBS', tileset: 'catacombs',
   a.ent('enemy', 44, 9, { enemyType: 'patrol' });
   a.ent('pickup', 48, 9, { kind: 'cassette' });
   a.deco(40, 4, 6); a.deco(42, 9, 5); a.deco(52, 9, 5);
-  a.oneWay(57, 8, 3); a.oneWay(61, 6, 3); a.oneWay(65, 8, 2);
+  // Platforms over the pit switch with the beat: wait for yours to light up.
+  a.beatPlatform(57, 8, 3, '1110'); a.beatPlatform(61, 6, 3, '1011'); a.beatPlatform(65, 8, 2, '1110');
   a.ent('pickup', 62, 5, { kind: 'cassette' });
   a.ent('enemy', 61, 3, { enemyType: 'flyer', patrolDistance: 64 });
   // card gauntlet
   a.floor(67, 90);
   a.ent('enemy', 75, 9, { enemyType: 'shooter' });
   a.ent('enemy', 80, 9, { enemyType: 'patrol' });
-  a.hazard(82, 83);
+  a.beatSpikes(82, 83, '1100');
   a.ent('enemy', 87, 9, { enemyType: 'shooter' });
   a.ent('pickup', 78, 7, { kind: 'cassette' });
   a.ent('pickup', 82, 7, { kind: 'cassette' });
@@ -175,6 +187,7 @@ section('catacombs', 130, { title: '1-3 CURSED CATACOMBS', tileset: 'catacombs',
   a.floor(91, 128);
   a.block(95, 7, 4, 3);
   a.hazard(99, 102);
+  a.beatPlatform(99, 7, 4, '1100');
   a.block(103, 7, 4, 3);
   a.ent('pickup', 101, 5, { kind: 'cassette' });
   a.ent('enemy', 105, 6, { enemyType: 'shooter' });
@@ -186,8 +199,8 @@ section('catacombs', 130, { title: '1-3 CURSED CATACOMBS', tileset: 'catacombs',
 });
 
 // ---------------------------------------------------------------------------
-// 4. Boss arena. The Unicorn arrives in milestone 4.
-section('boss', 24, { title: '1-4 THE UNICORN', tileset: 'catacombs', music: 'music-boss', background: 'catacombs', bpm: 160 }, (a) => {
+// 4. Boss arena: The Unicorn.
+section('boss', 24, { title: '1-4 THE UNICORN', tileset: 'catacombs', music: 'music-boss', background: 'catacombs' }, (a) => {
   a.walls();
   a.floor(0, 23);
   a.ent('spawn', 3, 9, {}, 'boss-start');
@@ -215,7 +228,7 @@ const entities = sections.flatMap((s) => s.objects).map((o) => ({
 }));
 const sectionObjects = sections.map((s) => ({
   id: nextId++, name: s.name, type: 'section', x: s.offset * T, y: 0, width: s.width * T, height: H * T, rotation: 0, visible: true,
-  properties: propList({ title: s.title, music: s.music, background: s.background, bpm: s.bpm }),
+  properties: propList({ title: s.title, music: s.music, background: s.background }),
 }));
 
 const bool = (name) => ({ name, type: 'bool', value: true });

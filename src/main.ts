@@ -4,6 +4,7 @@ import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';
 import { PreloadScene } from './scenes/PreloadScene';
 import { UIScene } from './scenes/UIScene';
+import { WinScene } from './scenes/WinScene';
 import { installPixelScaler } from './systems/PixelScaler';
 
 const debug = new URLSearchParams(window.location.search).has('debug');
@@ -25,7 +26,7 @@ const game = new Phaser.Game({
     default: 'arcade',
     arcade: { debug, fps: 60 },
   },
-  scene: [BootScene, PreloadScene, GameScene, UIScene],
+  scene: [BootScene, PreloadScene, GameScene, UIScene, WinScene],
 });
 
 installPixelScaler(game);

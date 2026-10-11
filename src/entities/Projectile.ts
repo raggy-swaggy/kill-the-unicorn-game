@@ -4,6 +4,10 @@ export interface ProjectileSpec {
   anim: string;
   speed: number;
   lifetimeMs: number;
+  /** Vertical speed, for angled shots. */
+  vy?: number;
+  /** Hitbox size, default 6x6. */
+  size?: [number, number];
 }
 
 /** Pooled straight-flying projectile, used for the Riff Shot and enemy bullets. */
@@ -14,8 +18,9 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
   fire(x: number, y: number, dir: number, spec: ProjectileSpec): void {
     this.enableBody(true, x, y, true, true);
     this.body.setAllowGravity(false);
-    this.body.setSize(6, 6);
-    this.setVelocity(dir * spec.speed, 0);
+    const [w, h] = spec.size ?? [6, 6];
+    this.body.setSize(w, h);
+    this.setVelocity(dir * spec.speed, spec.vy ?? 0);
     this.setFlipX(dir < 0);
     this.play(spec.anim, true);
     this.expiresAt = this.scene.time.now + spec.lifetimeMs;

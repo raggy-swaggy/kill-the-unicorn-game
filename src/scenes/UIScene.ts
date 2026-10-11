@@ -3,6 +3,7 @@ import { DISPLAY } from '../config/display';
 import { HEALTH } from '../config/gameplay';
 import { PALETTE } from '../config/palette';
 import { STATE } from '../systems/GameState';
+import { pixelText } from '../ui/pixelText';
 
 const FONT = 'pixel';
 
@@ -12,6 +13,8 @@ export class UIScene extends Phaser.Scene {
   private livesText!: Phaser.GameObjects.BitmapText;
   private scoreText!: Phaser.GameObjects.BitmapText;
   private cassetteText!: Phaser.GameObjects.BitmapText;
+  private bossBar!: Phaser.GameObjects.Graphics;
+  private bossLabel!: Phaser.GameObjects.BitmapText;
 
   constructor() {
     super('UI');
@@ -28,10 +31,12 @@ export class UIScene extends Phaser.Scene {
     this.add.image(DISPLAY.width - 26, 14, 'hud', 2).setOrigin(0);
     this.cassetteText = this.add.bitmapText(DISPLAY.width - 4, 15, FONT, '').setOrigin(1, 0).setTint(PALETTE.white);
 
-    const hint = this.add
-      .bitmapText(DISPLAY.width / 2, DISPLAY.height - 10, FONT, 'ARROWS/WASD MOVE  SPACE JUMP  J/X RIFF  M MUTE')
-      .setOrigin(0.5, 0)
-      .setTint(PALETTE.hotpink);
+    this.bossLabel = pixelText(this, DISPLAY.width / 2, 7, 'THE UNICORN', { tint: PALETTE.hotpink });
+    this.bossBar = this.add.graphics();
+
+    const hint = pixelText(this, DISPLAY.width / 2, DISPLAY.height - 7, 'ARROWS/WASD MOVE  SPACE JUMP  J/X RIFF  M MUTE', {
+      tint: PALETTE.hotpink,
+    });
     this.tweens.add({ targets: hint, alpha: 0, delay: 6000, duration: 800 });
 
     this.refresh();
@@ -57,6 +62,22 @@ export class UIScene extends Phaser.Scene {
     this.livesText.setText(`X${this.registry.get(STATE.lives)}`);
     this.scoreText.setText(String(this.registry.get(STATE.score)).padStart(6, '0'));
     this.cassetteText.setText(String(this.registry.get(STATE.cassettes)).padStart(2, '0'));
+    this.drawBossBar();
+  }
+
+  private drawBossBar(): void {
+    const max = (this.registry.get('bossMax') as number) ?? 0;
+    const hp = (this.registry.get('bossHp') as number) ?? 0;
+    this.bossBar.clear();
+    this.bossLabel.setVisible(max > 0);
+    if (max <= 0) return;
+    const w = 100;
+    const x = (DISPLAY.width - w) / 2;
+    this.bossBar.fillStyle(PALETTE.void, 1).fillRect(x - 1, 11, w + 2, 6);
+    this.bossBar.fillStyle(PALETTE.purple, 1).fillRect(x, 12, w, 4);
+    const fill = Math.round((w * hp) / max);
+    this.bossBar.fillStyle(hp <= max / 2 ? PALETTE.pink : PALETTE.hotpink, 1).fillRect(x, 12, fill, 4);
+    this.bossBar.fillStyle(PALETTE.white, 1).fillRect(x, 12, fill, 1);
   }
 
   private banner?: Phaser.GameObjects.BitmapText;
@@ -64,12 +85,7 @@ export class UIScene extends Phaser.Scene {
   /** Short centred title, e.g. the section name. */
   private showBanner(text: string): void {
     this.banner?.destroy();
-    const banner = this.add
-      .bitmapText(DISPLAY.width / 2, 44, FONT, text)
-      .setOrigin(0.5)
-      .setScale(2)
-      .setTint(PALETTE.cyan)
-      .setAlpha(0);
+    const banner = pixelText(this, DISPLAY.width / 2, 44, text, { scale: 2, tint: PALETTE.cyan }).setAlpha(0);
     this.banner = banner;
     this.tweens.chain({
       targets: banner,
@@ -105,10 +121,6 @@ export class UIScene extends Phaser.Scene {
   }
 
   private showGameOver(): void {
-    this.add
-      .bitmapText(DISPLAY.width / 2, DISPLAY.height / 2, FONT, 'GAME OVER')
-      .setOrigin(0.5)
-      .setScale(2)
-      .setTint(PALETTE.pink);
+    pixelText(this, DISPLAY.width / 2, DISPLAY.height / 2, 'GAME OVER', { scale: 2, tint: PALETTE.pink });
   }
 }

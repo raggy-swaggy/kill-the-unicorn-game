@@ -417,9 +417,9 @@ tileset('tiles/catacombs.png', [
   save('sprites/enemy-card.png', c);
 }
 
-// Projectiles, 8x8 frames: 0-1 riff shot (music note), 2 enemy bullet
+// Projectiles, 8x8 frames: 0-1 riff shot (music note), 2 enemy bullet, 3 boss glitter star
 {
-  const c = canvas(24, 8);
+  const c = canvas(32, 8);
   const note = (x, flag) => {
     c.rect(x + 1, 5, 3, 2, C.cyan); c.rect(x + 3, 1, 1, 5, C.cyan);
     c.rect(x + 4, 1, 2, 1, C.cyan); if (flag) c.rect(x + 5, 2, 2, 1, C.cyan);
@@ -428,6 +428,9 @@ tileset('tiles/catacombs.png', [
   note(0, false); note(8, true);
   c.rect(17, 2, 4, 4, C.pink); c.rect(18, 1, 2, 6, C.pink); c.rect(18, 2, 2, 4, C.white); c.rect(17, 3, 4, 2, C.white);
   for (const [x, y] of [[16, 2], [16, 3], [16, 4], [16, 5], [21, 2], [21, 3], [21, 4], [21, 5], [17, 1], [20, 1], [17, 6], [20, 6], [18, 0], [19, 0], [18, 7], [19, 7]]) c.px(x, y, C.void);
+  pattern(c, 24, 0, ['...#....', '...#....', '.#####..', '#######.', '.#####..', '.##.##..', '.#...#..', '........'], { '#': C.hotpink });
+  pattern(c, 24, 0, ['........', '...#....', '...#....', '.#####..', '..###...', '..#.#...', '........', '........'], { '#': C.white });
+  outline(c);
   save('sprites/projectiles.png', c);
 }
 
@@ -535,4 +538,105 @@ tileset('tiles/catacombs.png', [
     g.forEach((row, y) => [...row].forEach((v, x) => { if (v === '#') c.px(ox + x, oy + y, C.white); }));
   });
   save('fonts/pixel.png', c);
+}
+
+// ---------------------------------------------------------------------------
+// Beat platform, 16x8 frames: 0 solid, 1 about to switch, 2 off (outline only)
+{
+  const c = canvas(48, 8);
+  c.rect(0, 0, 16, 6, C.white); c.rect(1, 1, 14, 4, C.hotpink); c.rect(3, 2, 2, 2, C.white); c.rect(11, 2, 2, 2, C.white); c.rect(0, 6, 16, 1, C.pink);
+  c.rect(16, 0, 16, 6, C.white); c.rect(17, 1, 14, 4, C.cyan); c.rect(19, 2, 2, 2, C.white); c.rect(27, 2, 2, 2, C.white);
+  for (let x = 32; x < 48; x += 2) { c.px(x, 0, C.violet); c.px(x + 1, 5, C.violet); }
+  c.rect(32, 0, 1, 6, C.violet); c.rect(47, 0, 1, 6, C.violet);
+  save('sprites/beat-platform.png', c);
+}
+
+// Beat spikes, 16x16 frames: 0 retracted, 1 about to strike, 2 extended
+{
+  const c = canvas(48, 16);
+  const spikes = (ox, h, col, tip) => {
+    for (let s = 0; s < 4; s++) for (let i = 0; i < 4; i++) {
+      const sh = Math.round(h * (i < 2 ? (i + 1) / 2 : (4 - i) / 2));
+      if (sh > 0) c.rect(ox + s * 4 + i, 15 - sh, 1, sh, i === 1 ? tip : col);
+    }
+    c.rect(ox, 15, 16, 1, C.purple);
+  };
+  spikes(0, 2, C.violet, C.violet);
+  spikes(16, 4, C.pink, C.white);
+  spikes(32, 12, C.violet, C.white);
+  save('sprites/beat-spikes.png', c);
+}
+
+// Shockwave from the boss stomp, 16x16 frames 0-1
+{
+  const c = canvas(32, 16);
+  for (let f = 0; f < 2; f++) {
+    const x = f * 16;
+    for (let i = 0; i < 16; i++) {
+      const h = Math.round(4 + 6 * Math.sin((i / 15) * Math.PI)) + (f ? 1 : -1) * (i % 3 === 0 ? 1 : 0);
+      c.rect(x + i, 16 - h, 1, h, i % 2 ? C.hotpink : C.cyan);
+      c.px(x + i, 16 - h, C.white);
+    }
+  }
+  save('sprites/shockwave.png', c);
+}
+
+// The Unicorn boss, 64x64 frames facing left.
+// 0-1 idle, 2 charging (horn glows), 3 jumping; 4-7 the same in the dark second phase.
+{
+  const c = canvas(64 * 8, 64);
+  const draw = (ox, pose, dark) => {
+    const P = dark
+      ? { body: C.purple, shade: C.deep, mane: [C.pink, C.void, C.purple], horn: C.pink, hoof: C.pink, eye: C.white, pupil: C.pink, outline: C.pink }
+      : { body: C.white, shade: C.hotpink, mane: [C.pink, C.violet, C.cyan], horn: C.white, hoof: C.hotpink, eye: C.white, pupil: C.pink, outline: C.void };
+    const bob = pose === 1 ? 1 : 0;
+    const y0 = pose === 3 ? -4 : 0;
+    const by = 26 + bob + y0;
+    // legs
+    const legY = by + 18;
+    const legs = pose === 3 ? [[24, 8], [30, 6], [42, 6], [48, 8]] : [[24, 16], [31, 16], [42, 16], [48, 16]];
+    for (const [lx, lh] of legs) {
+      c.rect(ox + lx, legY, 4, lh - 2, P.body);
+      c.rect(ox + lx, legY + lh - 2, 4, 2, P.hoof);
+      c.rect(ox + lx + 3, legY, 1, lh - 2, P.shade);
+    }
+    // tail
+    for (let i = 0; i < 14; i++) c.rect(ox + 52 + Math.round(i / 3), by + i, 4, 1, P.mane[Math.floor(i / 5) % 3]);
+    // body
+    c.rect(ox + 22, by, 31, 19, P.body);
+    c.rect(ox + 22, by + 15, 31, 4, P.shade);
+    c.rect(ox + 36, by + 6, 6, 5, P.shade); // heart-shaped hip mark
+    c.rect(ox + 37, by + 5, 1, 1, P.shade); c.rect(ox + 40, by + 5, 1, 1, P.shade);
+    // neck and head
+    c.rect(ox + 20, by - 12, 11, 16, P.body);
+    c.rect(ox + 8, by - 18 + bob, 18, 12, P.body);
+    c.rect(ox + 3, by - 12 + bob, 10, 8, P.body);
+    c.rect(ox + 3, by - 6 + bob, 10, 2, P.shade);
+    // grin with teeth
+    const mouthY = by - 7 + bob;
+    c.rect(ox + 4, mouthY, 12, pose === 2 ? 3 : 1, C.void);
+    for (let t = 5; t < 15; t += 2) c.px(ox + t, mouthY, C.white);
+    if (pose === 2) for (let t = 6; t < 15; t += 2) c.px(ox + t, mouthY + 2, C.white);
+    // nostril
+    c.px(ox + 5, by - 10 + bob, P.shade);
+    // evil eye with brow
+    const ey = by - 15 + bob;
+    c.rect(ox + 12, ey, 5, 3, P.eye);
+    c.rect(ox + 13, ey + 1, 2, 2, P.pupil);
+    for (let i = 0; i < 6; i++) c.px(ox + 11 + i, ey - 2 + Math.floor(i / 2), C.void);
+    // ear
+    c.rect(ox + 21, by - 22 + bob, 3, 5, P.body); c.px(ox + 22, by - 21 + bob, P.shade);
+    // mane
+    for (let i = 0; i < 26; i++) c.rect(ox + 24 + (i % 2), by - 20 + i + bob, 6, 1, P.mane[Math.floor(i / 4) % 3]);
+    // horn, diagonal up-left
+    for (let i = 0; i < 12; i++) {
+      const hx = ox + 14 - Math.floor(i * 0.8), hy = by - 19 + bob - i;
+      const w = i < 4 ? 3 : i < 8 ? 2 : 1;
+      c.rect(hx, hy, w, 1, pose === 2 ? C.white : i % 3 === 0 ? (dark ? C.purple : C.cyan) : P.horn);
+    }
+    if (pose === 2) for (let r = 0; r < 6; r++) c.rect(ox + 4 - r, by - 31 + bob - r / 2, 2 + r, 1, C.hotpink, 120);
+  };
+  for (let f = 0; f < 8; f++) draw(f * 64, f % 4, f >= 4);
+  outline(c);
+  save('sprites/boss-unicorn.png', c);
 }

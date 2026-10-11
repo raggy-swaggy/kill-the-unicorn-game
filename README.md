@@ -4,7 +4,7 @@ Kurzes Retro-Jump'n'Run als Fan-Gimmick für die Band Kill the Unicorn. Läuft i
 
 Gebaut mit [Phaser 4](https://phaser.io), TypeScript und Vite. Interne Auflösung 320x180 Pixel.
 
-> Stand: Meilenstein 3 (komplettes Level 1 mit vier Abschnitten, Musik und Soundeffekte). Bossfight und Rhythmus-Mechanik folgen in Meilenstein 4. Die README wird mit jedem Meilenstein ergänzt.
+> Stand: Meilenstein 4 (komplettes Level 1, Rhythmus-Mechanik, Bossfight, Win-Screen). Touch-Steuerung, Titelbild, Game Over mit Continue, Highscore und CRT-Filter folgen in Meilenstein 5. Die README wird mit jedem Meilenstein ergänzt.
 
 ## Lokal starten
 
@@ -52,7 +52,22 @@ Alle Werte für das Spielgefühl stehen zentral in `src/config/gameplay.ts`:
 - `HEALTH`: Herzen pro Leben, Anzahl Leben, Unverwundbarkeit nach Treffer, Rückstoss
 - `RIFF_SHOT`: Tempo, Feuerrate, Reichweite, Schaden
 - `ENEMIES`: Lebenspunkte, Punkte und Verhalten pro Gegnertyp
-- `SCORE`: Punkte pro Kassette Nach dem Speichern lädt `npm run dev` das Spiel sofort neu.
+- `SCORE`: Punkte pro Kassette
+- `BOSS`: Lebenspunkte des Einhorns, Punkte, Tempo der zweiten Phase, Timing der Angriffe (Laser, Stampfen, Glitzer-Salve)
+
+Tempo und Breakdowns der Musik stehen in `src/config/rhythm.ts` (siehe unten).
+
+## Rhythmus-Mechanik
+
+In den Katakomben schalten Plattformen und Stachelfallen im Takt der Musik. Die Beat-Clock liest dafür die aktuelle Abspielposition des Musikstücks, damit nichts auseinanderläuft. Kurz bevor eine Plattform verschwindet oder eine Falle zusticht, blinkt sie.
+
+In `src/config/rhythm.ts` steht pro Musikstück:
+
+- `bpm`: Tempo. **Wenn ein echter Band-Track einen Platzhalter ersetzt, hier das BPM des Tracks eintragen.**
+- `offsetMs`: optional, falls der erste Schlag nicht genau am Anfang der Datei liegt
+- `breakdowns`: Bereiche in Schlägen innerhalb eines Loops, z. B. `[[8, 16]]` = Schlag 8 bis 15. Dort wackelt der Bildschirm bei jedem Schlag.
+
+Das Muster jeder Plattform oder Falle wird in Tiled als Text gesetzt, ein Zeichen pro Schlag: `1110` heisst drei Schläge an, einer aus, dann wiederholt. Nach dem Speichern lädt `npm run dev` das Spiel sofort neu.
 
 ## Assets austauschen
 
@@ -66,6 +81,10 @@ Alle Grafiken liegen in `public/assets/`. Welche Datei wofür verwendet wird, st
 | `backgrounds/<abschnitt>-near.png` | Hintergrund vorne mit Transparenz (320x180) |
 | `sprites/cursed-cabinet.png` | Verfluchter Automat am Ende von Abschnitt 1, 2 Frames à 32x48 |
 | `sprites/portal.png` | Portal zwischen Abschnitten, 2 Frames à 16x32 |
+| `sprites/boss-unicorn.png` | Das Einhorn, 8 Frames à 64x64, Blick nach links: 0–1 Stehen, 2 Angriff (Horn leuchtet), 3 Sprung; 4–7 dasselbe in der dunklen zweiten Phase |
+| `sprites/beat-platform.png` | Takt-Plattform, 3 Frames à 16x8: 0 fest, 1 Warnung, 2 aus |
+| `sprites/beat-spikes.png` | Takt-Falle, 3 Frames à 16x16: 0 eingefahren, 1 Warnung, 2 ausgefahren |
+| `sprites/shockwave.png` | Schockwelle beim Stampfen, 2 Frames à 16x16 |
 | `sprites/enemy-popup.png` | Gegner Patrouille (Pop-up-Fenster), 2 Frames à 16x16, Blick nach links |
 | `sprites/enemy-cursor.png` | Gegner Flieger (Cursor), 2 Frames à 16x16, Blick nach links |
 | `sprites/enemy-card.png` | Gegner Schütze (verfluchte Karte), 2 Frames à 16x16: 0 Ruhe, 1 Schuss |
@@ -85,8 +104,8 @@ Animationen (welche Frames, wie schnell) werden ebenfalls im Manifest unter `ani
 | `audio/music/arcade.wav` | Abschnitt 1, Neon-Spielhalle |
 | `audio/music/datahighway.wav` | Abschnitt 2, Datenautobahn |
 | `audio/music/catacombs.wav` | Abschnitt 3, Katakomben |
-| `audio/music/boss.wav` | Bossfight |
-| `audio/sfx/*.wav` | Soundeffekte: jump, shoot, enemy-hit, enemy-die, hurt, pickup, heart, checkpoint, glitch, portal, lose-life |
+| `audio/music/boss.wav` | Bossfight (läuft in der zweiten Phase etwas schneller) |
+| `audio/sfx/*.wav` | Soundeffekte: jump, shoot, enemy-hit, enemy-die, hurt, pickup, heart, checkpoint, glitch, portal, lose-life, boss-hit, laser-charge, laser, stomp, roar, boss-die, win |
 
 Musik läuft in Endlosschleife, die Datei sollte also nahtlos loopen. Für echte Tracks empfehle ich MP3 oder OGG statt WAV (viel kleiner). Dazu die Datei ablegen und im Manifest unter `audio` die `urls` anpassen, z. B. `["audio/music/arcade.ogg", "audio/music/arcade.mp3"]`. Der Browser nimmt das erste Format, das er abspielen kann (Safari braucht MP3 oder M4A). Welcher Track in welchem Abschnitt läuft, steht in der Tiled-Map beim jeweiligen Abschnitt (Eigenschaft `music`).
 
@@ -105,7 +124,7 @@ Die vier Abschnitte liegen nebeneinander in derselben Map, jeweils durch Wände 
 1. Neon-Spielhalle (Tutorial), endet am verfluchten Automaten mit Glitch-Übergang
 2. Datenautobahn mit Ladebalken und Fenstern über dem Nichts
 3. Okkulte Katakomben mit Stacheln und verfluchten Karten
-4. Boss-Arena
+4. Boss-Arena mit dem Einhorn
 
 Konventionen:
 
@@ -121,8 +140,10 @@ Konventionen:
 | `checkpoint` | | Wiedereinstiegspunkt nach Verlust eines Lebens |
 | `spawn` | Name des Objekts, z. B. `datahighway-start` | Zielpunkt für Portale |
 | `portal` | `target` (Name eines `spawn`), `effect`: `glitch` oder `fade`, `sprite`: `cursed-cabinet` oder `portal` | Übergang in einen anderen Abschnitt |
-| `boss` | | Position des Bosses (ab Meilenstein 4) |
-- Objekt-Ebene `sections`: ein Rechteck pro Abschnitt mit den Eigenschaften `title` (Einblendung), `music` (Audio-Key aus dem Manifest), `background` (z. B. `arcade` für `bg-arcade-far/near`) und `bpm` (Tempo für die Rhythmus-Mechanik)
+| `boss` | | Startposition des Einhorns in der Boss-Arena |
+| `beat-platform` | `pattern` (z. B. `1110`), `tiles` (Breite in Tiles) | Plattform, die im Takt erscheint und verschwindet. Position = linke obere Ecke. |
+| `beat-trap` | `pattern` (z. B. `1100`) | Stachelfalle im Takt, ein Tile breit. Position = linke obere Ecke. |
+- Objekt-Ebene `sections`: ein Rechteck pro Abschnitt mit den Eigenschaften `title` (Einblendung), `music` (Audio-Key aus dem Manifest) und `background` (z. B. `arcade` für `bg-arcade-far/near`)
 - Tile-Eigenschaften im Tileset: `collides` (fest von allen Seiten), `oneWay` (nur von oben begehbar, von unten durchspringbar), `hazard` (Stacheln, Strom usw., kostet ein Herz)
 
 Belegung jedes Tilesets (gleich für alle Abschnitte): 0 Boden oben, 1 Boden gefüllt, 2 fester Block, 3 Plattform von unten durchspringbar, 4 Gefahr, 5–11 Dekoration.
@@ -134,8 +155,8 @@ Neue Tilesets bitte als PNG nach `public/assets/tiles/` legen, in der Map einbet
 ```
 public/assets/   austauschbare Assets + manifest.json
 src/config/      Spielwerte, Steuerung, Palette, Anzeige
-src/scenes/      Boot, Preload, Game, UI (weitere folgen)
-src/entities/    Spielfigur, Gegner, Schüsse, Pickups, Checkpoints
-src/systems/     Eingabe, Level-Loader, Asset-Manifest, Spielstand, Skalierung
+src/scenes/      Boot, Preload, Game, UI, Win (weitere folgen)
+src/entities/    Spielfigur, Gegner, Boss, Schüsse, Pickups, Checkpoints, Portale, Takt-Plattformen
+src/systems/     Eingabe, Level-Loader, Asset-Manifest, Spielstand, Audio, Beat-Clock, Skalierung
 tools/           Generatoren für Platzhalter-Grafiken, -Audio und das Start-Layout von Level 1
 ```

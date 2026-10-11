@@ -8,7 +8,6 @@ export interface LevelSection {
   width: number;
   music: string;
   background: string;
-  bpm: number;
 }
 
 export interface LoadedLevel {
@@ -61,12 +60,11 @@ export function loadLevel(scene: Phaser.Scene, mapKey: string): LoadedLevel {
       width: o.width ?? map.widthInPixels,
       music: getProp<string>(o, 'music') ?? '',
       background: getProp<string>(o, 'background') ?? 'arcade',
-      bpm: getProp<number>(o, 'bpm') ?? 120,
     }))
     .sort((a, b) => a.x - b.x);
   // A map without sections is treated as one big section.
   if (sections.length === 0) {
-    sections.push({ name: 'level', title: '', x: 0, width: map.widthInPixels, music: '', background: 'arcade', bpm: 120 });
+    sections.push({ name: 'level', title: '', x: 0, width: map.widthInPixels, music: '', background: 'arcade' });
   }
 
   return { map, ground, spawn, spawns, sections, objects };

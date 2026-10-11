@@ -75,3 +75,20 @@ export const ENEMIES = {
 export const SCORE = {
   cassette: 50,
 };
+
+export const BOSS = {
+  hp: 60,
+  score: 5000,
+  /** Second phase starts below this share of HP. */
+  phase2At: 0.5,
+  /** Phase 2 timings are multiplied by this (smaller = faster). */
+  phase2Speed: 0.7,
+  /** Music speed in phase 2. */
+  phase2MusicRate: 1.12,
+  introMs: 1800,
+  idleMs: 1100,
+  laser: { telegraphMs: 950, durationMs: 650, thickness: 14 },
+  stomp: { jumpVelocity: 380, waveSpeed: 120, waveLifetimeMs: 2600, pauseMs: 450 },
+  spread: { count: 5, countPhase2: 7, speed: 105, angleDeg: 70, bursts: 1, burstsPhase2: 2, lifetimeMs: 3000 },
+  hitFlashMs: 60,
+};

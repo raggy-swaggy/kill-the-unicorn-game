@@ -22,7 +22,11 @@
     { "key": "checkpoint", "url": "sprites/checkpoint.png", "frameWidth": 16, "frameHeight": 32 },
     { "key": "hud", "url": "ui/hud.png", "frameWidth": 8, "frameHeight": 8 },
     { "key": "cursed-cabinet", "url": "sprites/cursed-cabinet.png", "frameWidth": 32, "frameHeight": 48 },
-    { "key": "portal", "url": "sprites/portal.png", "frameWidth": 16, "frameHeight": 32 }
+    { "key": "portal", "url": "sprites/portal.png", "frameWidth": 16, "frameHeight": 32 },
+    { "key": "beat-platform", "url": "sprites/beat-platform.png", "frameWidth": 16, "frameHeight": 8 },
+    { "key": "beat-spikes", "url": "sprites/beat-spikes.png", "frameWidth": 16, "frameHeight": 16 },
+    { "key": "shockwave", "url": "sprites/shockwave.png", "frameWidth": 16, "frameHeight": 16 },
+    { "key": "boss-unicorn", "url": "sprites/boss-unicorn.png", "frameWidth": 64, "frameHeight": 64 }
   ],
   "tilemaps": [
     { "key": "level1", "url": "maps/level1.json" }
@@ -50,7 +54,14 @@
     { "key": "sfx-checkpoint", "urls": [ "audio/sfx/checkpoint.wav" ] },
     { "key": "sfx-glitch", "urls": [ "audio/sfx/glitch.wav" ] },
     { "key": "sfx-portal", "urls": [ "audio/sfx/portal.wav" ] },
-    { "key": "sfx-lose-life", "urls": [ "audio/sfx/lose-life.wav" ] }
+    { "key": "sfx-lose-life", "urls": [ "audio/sfx/lose-life.wav" ] },
+    { "key": "sfx-boss-hit", "urls": [ "audio/sfx/boss-hit.wav" ] },
+    { "key": "sfx-laser-charge", "urls": [ "audio/sfx/laser-charge.wav" ] },
+    { "key": "sfx-laser", "urls": [ "audio/sfx/laser.wav" ] },
+    { "key": "sfx-stomp", "urls": [ "audio/sfx/stomp.wav" ] },
+    { "key": "sfx-roar", "urls": [ "audio/sfx/roar.wav" ] },
+    { "key": "sfx-boss-die", "urls": [ "audio/sfx/boss-die.wav" ] },
+    { "key": "sfx-win", "urls": [ "audio/sfx/win.wav" ] }
   ],
   "animations": [
     { "key": "player-idle", "sheet": "player", "frames": [ 0, 1 ], "frameRate": 3, "repeat": -1 },
@@ -69,6 +80,14 @@
     { "key": "checkpoint-off", "sheet": "checkpoint", "frames": [ 0 ], "frameRate": 1, "repeat": 0 },
     { "key": "checkpoint-on", "sheet": "checkpoint", "frames": [ 1 ], "frameRate": 1, "repeat": 0 },
     { "key": "cursed-cabinet-idle", "sheet": "cursed-cabinet", "frames": [ 0, 0, 0, 1, 0, 1 ], "frameRate": 8, "repeat": -1 },
-    { "key": "portal-idle", "sheet": "portal", "frames": [ 0, 1 ], "frameRate": 6, "repeat": -1 }
+    { "key": "portal-idle", "sheet": "portal", "frames": [ 0, 1 ], "frameRate": 6, "repeat": -1 },
+    { "key": "boss-glitter", "sheet": "projectiles", "frames": [ 3 ], "frameRate": 1, "repeat": 0 },
+    { "key": "shockwave", "sheet": "shockwave", "frames": [ 0, 1 ], "frameRate": 10, "repeat": -1 },
+    { "key": "unicorn-idle", "sheet": "boss-unicorn", "frames": [ 0, 1 ], "frameRate": 3, "repeat": -1 },
+    { "key": "unicorn-charge", "sheet": "boss-unicorn", "frames": [ 2 ], "frameRate": 1, "repeat": 0 },
+    { "key": "unicorn-jump", "sheet": "boss-unicorn", "frames": [ 3 ], "frameRate": 1, "repeat": 0 },
+    { "key": "unicorn-dark-idle", "sheet": "boss-unicorn", "frames": [ 4, 5 ], "frameRate": 4, "repeat": -1 },
+    { "key": "unicorn-dark-charge", "sheet": "boss-unicorn", "frames": [ 6 ], "frameRate": 1, "repeat": 0 },
+    { "key": "unicorn-dark-jump", "sheet": "boss-unicorn", "frames": [ 7 ], "frameRate": 1, "repeat": 0 }
   ]
 }

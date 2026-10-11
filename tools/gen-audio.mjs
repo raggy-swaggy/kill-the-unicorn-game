@@ -161,3 +161,11 @@ sfx('sfx/glitch.wav', 0.8, (b) => {
 });
 sfx('sfx/portal.wav', 0.6, (b) => note(b, 0, 0.6, 200, { wave: 'triangle', vol: 0.4, slide: 3, decay: 0.3 }));
 sfx('sfx/lose-life.wav', 0.7, (b) => [523, 494, 466, 440, 415, 392].forEach((f, i) => note(b, i * 0.1, 0.12, f / 2, { duty: 0.5, vol: 0.25 })));
+// Boss
+sfx('sfx/boss-hit.wav', 0.1, (b) => { note(b, 0, 0.1, 140, { duty: 0.5, vol: 0.3, slide: -0.3, decay: 0.04 }); note(b, 0, 0.05, 1, { wave: 'noise', vol: 0.12, decay: 0.02 }); });
+sfx('sfx/laser-charge.wav', 0.9, (b) => { note(b, 0, 0.9, 200, { wave: 'saw', vol: 0.18, slide: 3, attack: 0.6 }); note(b, 0, 0.9, 203, { duty: 0.25, vol: 0.1, slide: 3, attack: 0.6 }); });
+sfx('sfx/laser.wav', 0.7, (b) => { for (let i = 0; i < 14; i++) note(b, i * 0.05, 0.05, 600 + (i % 2) * 300, { duty: 0.5, vol: 0.18 }); note(b, 0, 0.7, 1, { wave: 'noise', vol: 0.1, decay: 0.4 }); });
+sfx('sfx/stomp.wav', 0.4, (b) => { kick(b, 0, 0.9); note(b, 0, 0.35, 1, { wave: 'noise', vol: 0.3, decay: 0.12 }); });
+sfx('sfx/roar.wav', 1.0, (b) => { note(b, 0, 1, 110, { wave: 'saw', vol: 0.3, slide: -0.5, attack: 0.1, decay: 0.6 }); note(b, 0, 1, 1, { wave: 'noise', vol: 0.2, decay: 0.5 }); note(b, 0, 1, 166, { duty: 0.3, vol: 0.15, slide: -0.5, decay: 0.5 }); });
+sfx('sfx/boss-die.wav', 1.5, (b) => { for (let i = 0; i < 10; i++) { kick(b, i * 0.12, 0.5); note(b, i * 0.12, 0.1, 1, { wave: 'noise', vol: 0.25, decay: 0.05 }); } note(b, 0, 1.5, 880, { duty: 0.5, vol: 0.12, slide: -0.9, decay: 0.8 }); });
+sfx('sfx/win.wav', 1.6, (b) => [60, 64, 67, 72, 67, 72, 76, 79].forEach((m, i) => note(b, i * 0.15, i === 7 ? 0.5 : 0.14, midi(m + 12), { duty: 0.25, vol: 0.22, decay: i === 7 ? 0.4 : 0.1 })));

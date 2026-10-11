@@ -1,7 +1,10 @@
 import Phaser from 'phaser';
 import { AUDIO } from '../config/audio';
-import { CAMERA, HEALTH, PHYSICS, RIFF_SHOT, SCORE } from '../config/gameplay';
+import { BOSS, CAMERA, HEALTH, PHYSICS, RIFF_SHOT, SCORE } from '../config/gameplay';
+import { RHYTHM } from '../config/rhythm';
 import { DISPLAY } from '../config/display';
+import { BeatPlatform, BeatTrap } from '../entities/BeatPlatform';
+import { UnicornBoss } from '../entities/boss/UnicornBoss';
 import { Player } from '../entities/Player';
 import { Portal, type TransitionEffect } from '../entities/Portal';
 import { Projectile } from '../entities/Projectile';
@@ -11,6 +14,7 @@ import { FlyerEnemy } from '../entities/enemies/FlyerEnemy';
 import { PatrolEnemy } from '../entities/enemies/PatrolEnemy';
 import { ShooterEnemy } from '../entities/enemies/ShooterEnemy';
 import { AudioManager } from '../systems/AudioManager';
+import { BeatClock } from '../systems/BeatClock';
 import { addTo, resetGameState, STATE } from '../systems/GameState';
 import { InputManager } from '../systems/InputManager';
 import { getProp, loadLevel, type LevelSection, type LoadedLevel } from '../systems/LevelLoader';
@@ -33,6 +37,12 @@ export class GameScene extends Phaser.Scene {
   private pickups!: Phaser.Physics.Arcade.Group;
   private checkpoints!: Phaser.Physics.Arcade.Group;
   private portals!: Phaser.Physics.Arcade.Group;
+  private beatPlatforms!: Phaser.Physics.Arcade.Group;
+  private beatTraps!: Phaser.Physics.Arcade.Group;
+  private beatClock!: BeatClock;
+  private bossSpawn?: Phaser.Math.Vector2;
+  private boss?: UnicornBoss;
+  private won = false;
   private respawnPoint!: Phaser.Math.Vector2;
   private section?: LevelSection;
   private gameOver = false;
@@ -45,10 +55,15 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     this.gameOver = false;
     this.transitioning = false;
+    this.won = false;
+    this.boss = undefined;
+    this.bossSpawn = undefined;
     this.section = undefined;
     this.lookahead = 0;
     resetGameState(this.registry);
     this.audio = new AudioManager(this);
+    this.beatClock = new BeatClock(this);
+    this.beatClock.on('breakdown', () => this.cameras.main.shake(RHYTHM.breakdownShakeMs, RHYTHM.breakdownShakeIntensity));
 
     this.bgFar = this.add.tileSprite(0, 0, DISPLAY.width, DISPLAY.height, 'bg-arcade-far').setOrigin(0).setScrollFactor(0);
     this.bgNear = this.add.tileSprite(0, 0, DISPLAY.width, DISPLAY.height, 'bg-arcade-near').setOrigin(0).setScrollFactor(0);
@@ -62,11 +77,13 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.checkCollision.down = false;
 
     this.shots = this.physics.add.group({ classType: Projectile, defaultKey: 'projectiles', maxSize: RIFF_SHOT.maxOnScreen });
-    this.bullets = this.physics.add.group({ classType: Projectile, defaultKey: 'projectiles', maxSize: 12 });
+    this.bullets = this.physics.add.group({ classType: Projectile, defaultKey: 'projectiles', maxSize: 32 });
     this.enemies = this.physics.add.group();
     this.pickups = this.physics.add.group();
     this.checkpoints = this.physics.add.group();
     this.portals = this.physics.add.group();
+    this.beatPlatforms = this.physics.add.group();
+    this.beatTraps = this.physics.add.group();
 
     this.inputs = new InputManager(this);
     this.player = new Player(this, spawn.x, spawn.y, this.inputs, this.shots);
@@ -74,6 +91,8 @@ export class GameScene extends Phaser.Scene {
     this.player.setDepth(10);
 
     this.spawnEntities({ player: this.player, ground, bullets: this.bullets });
+    this.registry.set('cassettesTotal', this.pickups.getChildren().filter((p) => (p as Pickup).kind === 'cassette').length);
+    this.registry.set('bossMax', 0);
     this.setupCollisions();
     this.setupSounds();
 
@@ -107,6 +126,20 @@ export class GameScene extends Phaser.Scene {
         const checkpoint = new Checkpoint(this, x, y);
         this.checkpoints.add(checkpoint);
         checkpoint.setupBody();
+      } else if (obj.type === 'beat-platform') {
+        const tiles = getProp<number>(obj, 'tiles') ?? 3;
+        const pattern = getProp<string>(obj, 'pattern') ?? '10';
+        for (let i = 0; i < tiles; i++) {
+          const segment = new BeatPlatform(this, x + i * 16, y, pattern);
+          this.beatPlatforms.add(segment);
+          segment.setupBody();
+        }
+      } else if (obj.type === 'beat-trap') {
+        const trap = new BeatTrap(this, x, y, getProp<string>(obj, 'pattern') ?? '10');
+        this.beatTraps.add(trap);
+        trap.setupBody();
+      } else if (obj.type === 'boss') {
+        this.bossSpawn = new Phaser.Math.Vector2(x, y);
       } else if (obj.type === 'portal') {
         const portal = new Portal(
           this,
@@ -127,6 +160,11 @@ export class GameScene extends Phaser.Scene {
     type Obj = Parameters<Phaser.Types.Physics.Arcade.ArcadePhysicsCallback>[0];
 
     this.physics.add.collider(this.player, ground);
+    this.physics.add.collider(this.player, this.beatPlatforms);
+    this.physics.add.overlap(this.player, this.beatTraps, (_p: Obj, trap: Obj) => {
+      const t = trap as BeatTrap;
+      if (t.extended) this.damagePlayer(t.x + 8);
+    });
     this.physics.add.collider(this.enemies, ground);
     this.physics.add.collider(this.shots, ground, (shot: Obj) => (shot as Projectile).kill());
     this.physics.add.collider(this.bullets, ground, (bullet: Obj) => (bullet as Projectile).kill());
@@ -160,6 +198,17 @@ export class GameScene extends Phaser.Scene {
   private setupSounds(): void {
     this.events.on('player-jump', () => this.audio.sfx('jump', 0.6));
     this.events.on('player-shoot', () => this.audio.sfx('shoot', 0.5));
+    this.events.on('boss-hp', (hp: number, max: number) => {
+      this.registry.set('bossHp', hp);
+      this.registry.set('bossMax', max);
+    });
+    this.events.on('boss-phase2', () => {
+      this.cameras.main.flash(300, 90, 0, 60);
+      this.bgFar.setTint(0x9a5a9a);
+      this.bgNear.setTint(0x9a5a9a);
+      this.audio.setMusicRate(BOSS.phase2MusicRate);
+    });
+    this.events.on('boss-defeated', (boss: UnicornBoss) => this.winSequence(boss));
     this.events.on('enemy-killed', (enemy: Enemy) => {
       addTo(this.registry, STATE.score, enemy.scoreValue);
       this.spawnPop(enemy.x, enemy.y - enemy.height / 2);
@@ -183,7 +232,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private damagePlayer(sourceX: number): void {
-    if (this.gameOver || this.transitioning || !this.player.hurt(sourceX)) return;
+    if (this.gameOver || this.transitioning || this.won || !this.player.hurt(sourceX)) return;
     this.cameras.main.shake(90, 0.01);
     const hearts = addTo(this.registry, STATE.hearts, -1);
     if (hearts <= 0) this.loseLife();
@@ -258,7 +307,7 @@ export class GameScene extends Phaser.Scene {
       this.audio.playMusic(next.music);
       this.registry.set('section', next.name);
       if (next.title) this.game.events.emit('banner', next.title);
-      if (next.name === 'boss') this.time.delayedCall(2200, () => this.game.events.emit('banner', 'BOSS FIGHT COMING SOON'));
+      if (next.name === 'boss') this.startBossFight(next);
       snapCamera = true;
     }
     if (snapCamera) {
@@ -266,6 +315,70 @@ export class GameScene extends Phaser.Scene {
       cam.setFollowOffset(-this.lookahead, 0);
       cam.startFollow(this.player, true, CAMERA.lerpX, CAMERA.lerpY);
     }
+  }
+
+  private startBossFight(section: LevelSection): void {
+    if (this.boss || !this.bossSpawn) return;
+    const boss = new UnicornBoss(this, this.bossSpawn.x, this.bossSpawn.y, {
+      player: this.player,
+      bullets: this.bullets,
+      audio: this.audio,
+      arena: { x: section.x, width: section.width, floorY: this.bossSpawn.y },
+      hurtPlayer: (sourceX) => this.damagePlayer(sourceX),
+    });
+    this.physics.add.existing(boss);
+    boss.setupBody();
+    this.boss = boss;
+    type Obj = Parameters<Phaser.Types.Physics.Arcade.ArcadePhysicsCallback>[0];
+    // The boss is too heavy for one-way platforms; it only lands on solid ground.
+    this.physics.add.collider(boss, this.level.ground, undefined, (_b: Obj, tile: Obj) => {
+      return !((tile as Phaser.Tilemaps.Tile).properties as Record<string, unknown>)?.oneWay;
+    });
+    this.physics.add.overlap(this.shots, boss, (a: Obj, b: Obj) => {
+      const shot = (a instanceof Projectile ? a : b) as Projectile;
+      if (!boss.vulnerable) return;
+      shot.kill();
+      boss.hit(RIFF_SHOT.damage);
+    });
+    this.physics.add.overlap(this.player, boss, () => {
+      if (boss.alive) this.damagePlayer(boss.x);
+    });
+    this.registry.set('bossHp', boss.hp);
+    this.registry.set('bossMax', boss.maxHp);
+    this.time.delayedCall(1200, () => boss.start());
+  }
+
+  private winSequence(boss: UnicornBoss): void {
+    this.won = true;
+    this.player.makeInvulnerable(1e9);
+    for (const b of this.bullets.getChildren()) (b as Projectile).kill();
+    this.audio.stopMusic();
+    this.audio.sfx('boss-die');
+    addTo(this.registry, STATE.score, BOSS.score);
+    this.registry.set('bossMax', 0);
+    for (let i = 0; i < 12; i++) {
+      this.time.delayedCall(i * 110, () => {
+        this.spawnPop(boss.x + Phaser.Math.Between(-24, 24), boss.y - Phaser.Math.Between(8, 52));
+        this.cameras.main.shake(80, 0.01);
+      });
+    }
+    this.time.delayedCall(1400, () => {
+      this.cameras.main.flash(500, 255, 255, 255);
+      boss.destroy();
+      this.boss = undefined;
+      this.audio.sfx('win');
+    });
+    this.time.delayedCall(3200, () => {
+      this.cameras.main.fadeOut(400, 7, 6, 26);
+      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+        this.scene.stop('UI');
+        this.scene.start('Win', {
+          score: this.registry.get(STATE.score),
+          cassettes: this.registry.get(STATE.cassettes),
+          cassettesTotal: this.registry.get('cassettesTotal'),
+        });
+      });
+    });
   }
 
   private spawnPop(x: number, y: number): void {
@@ -286,6 +399,11 @@ export class GameScene extends Phaser.Scene {
     this.player.update(time, delta);
     for (const enemy of this.enemies.getChildren()) (enemy as Enemy).update(time, delta);
     for (const pickup of this.pickups.getChildren()) (pickup as Pickup).update(time);
+
+    this.beatClock.update(time);
+    for (const p of this.beatPlatforms.getChildren()) (p as BeatPlatform).sync(this.beatClock);
+    for (const t of this.beatTraps.getChildren()) (t as BeatTrap).sync(this.beatClock);
+    this.boss?.update(time);
 
     this.checkHazards();
     // Fell into a pit: costs a whole life.
