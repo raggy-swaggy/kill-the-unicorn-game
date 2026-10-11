@@ -1,0 +1,22 @@
+{
+  "images": [
+    { "key": "tiles-arcade", "url": "tiles/arcade.png" },
+    { "key": "bg-arcade-far", "url": "backgrounds/arcade-far.png" },
+    { "key": "bg-arcade-near", "url": "backgrounds/arcade-near.png" }
+  ],
+  "spritesheets": [
+    { "key": "player", "url": "sprites/player.png", "frameWidth": 16, "frameHeight": 32 }
+  ],
+  "tilemaps": [
+    { "key": "testlevel", "url": "maps/testlevel.json" }
+  ],
+  "tilesets": {
+    "arcade": "tiles-arcade"
+  },
+  "animations": [
+    { "key": "player-idle", "sheet": "player", "frames": [0, 1], "frameRate": 3, "repeat": -1 },
+    { "key": "player-run", "sheet": "player", "frames": [2, 3, 4, 5], "frameRate": 10, "repeat": -1 },
+    { "key": "player-jump", "sheet": "player", "frames": [6], "frameRate": 1, "repeat": 0 },
+    { "key": "player-fall", "sheet": "player", "frames": [7], "frameRate": 1, "repeat": 0 }
+  ]
+}

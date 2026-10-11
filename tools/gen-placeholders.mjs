@@ -1,0 +1,283 @@
+// Generates placeholder PNGs and the test level into public/assets.
+// Existing files are kept so real art is never overwritten; pass --force to regenerate everything.
+import { PNG } from 'pngjs';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'public', 'assets');
+const FORCE = process.argv.includes('--force');
+
+// Keep in sync with src/config/palette.ts
+const C = {
+  void: '#07061a',
+  night: '#120f3a',
+  deep: '#1f1858',
+  purple: '#5b2a86',
+  violet: '#8a3fc4',
+  pink: '#ff2e97',
+  hotpink: '#ff7ac6',
+  cyan: '#29e7ff',
+  teal: '#138fa8',
+  white: '#f4f0ff',
+  skin: '#e8b8a0',
+  shadow: '#2a1f4a',
+};
+
+function rgba(hex, a = 255) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255, a];
+}
+
+function canvas(w, h) {
+  const png = new PNG({ width: w, height: h });
+  png.data.fill(0);
+  const px = (x, y, hex, a = 255) => {
+    if (x < 0 || y < 0 || x >= w || y >= h) return;
+    const i = (y * w + x) * 4;
+    const [r, g, b, al] = rgba(hex, a);
+    png.data[i] = r; png.data[i + 1] = g; png.data[i + 2] = b; png.data[i + 3] = al;
+  };
+  const rect = (x, y, rw, rh, hex, a = 255) => {
+    for (let yy = y; yy < y + rh; yy++) for (let xx = x; xx < x + rw; xx++) px(xx, yy, hex, a);
+  };
+  return { png, px, rect, w, h };
+}
+
+function save(rel, c) {
+  const file = path.join(ROOT, rel);
+  if (fs.existsSync(file) && !FORCE) { console.log(`skip  ${rel} (exists)`); return; }
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, PNG.sync.write(c.png));
+  console.log(`write ${rel}`);
+}
+
+function saveJson(rel, data) {
+  const file = path.join(ROOT, rel);
+  if (fs.existsSync(file) && !FORCE) { console.log(`skip  ${rel} (exists)`); return; }
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(data, null, 1));
+  console.log(`write ${rel}`);
+}
+
+// ---------------------------------------------------------------------------
+// Player: 8 frames of 16x32. 0-1 idle, 2-5 run, 6 jump, 7 fall.
+function drawPlayerFrame(c, ox, frame) {
+  const bob = frame === 1 ? 1 : 0;
+  const runPhase = frame >= 2 && frame <= 5 ? frame - 2 : -1;
+  const air = frame === 6 ? 'jump' : frame === 7 ? 'fall' : null;
+  const top = 4 + bob + (runPhase === 1 || runPhase === 3 ? 1 : 0);
+
+  // hood
+  c.rect(ox + 4, top, 8, 3, C.purple);
+  c.rect(ox + 3, top + 2, 10, 7, C.purple);
+  c.px(ox + 11, top - 1, C.purple);
+  // face shadow + glowing eyes
+  c.rect(ox + 7, top + 4, 5, 4, C.void);
+  c.px(ox + 9, top + 5, C.pink);
+  c.px(ox + 11, top + 5, C.pink);
+  // hoodie body
+  c.rect(ox + 4, top + 9, 8, 9, C.violet);
+  c.rect(ox + 4, top + 9, 1, 9, C.purple);
+  // arm on guitar neck
+  c.rect(ox + 10, top + 11, 3, 2, C.violet);
+  c.px(ox + 13, top + 11, C.skin);
+  // guitar ("axe"): body low left, neck diagonal up right
+  c.rect(ox + 2, top + 14, 5, 4, C.cyan);
+  c.rect(ox + 3, top + 13, 3, 1, C.cyan);
+  c.px(ox + 4, top + 15, C.void);
+  for (let i = 0; i < 7; i++) c.px(ox + 7 + i, top + 13 - Math.floor(i / 2), C.teal);
+  c.rect(ox + 13, top + 8, 2, 2, C.pink);
+  // legs
+  const legY = top + 18;
+  const legLen = 32 - legY;
+  if (air === 'jump') {
+    c.rect(ox + 5, legY, 2, legLen - 3, C.shadow);
+    c.rect(ox + 9, legY, 2, legLen - 5, C.shadow);
+    c.rect(ox + 4, legY + legLen - 3, 3, 1, C.white);
+    c.rect(ox + 9, legY + legLen - 5, 3, 1, C.white);
+  } else if (air === 'fall') {
+    c.rect(ox + 4, legY, 2, legLen - 1, C.shadow);
+    c.rect(ox + 10, legY, 2, legLen - 2, C.shadow);
+    c.rect(ox + 3, legY + legLen - 1, 3, 1, C.white);
+    c.rect(ox + 10, legY + legLen - 2, 3, 1, C.white);
+  } else if (runPhase >= 0) {
+    const spread = [3, 1, -3, 1][runPhase];
+    c.rect(ox + 7 - spread, legY, 2, legLen - 1, C.shadow);
+    c.rect(ox + 7 + spread, legY, 2, legLen - 1, C.shadow);
+    c.rect(ox + 6 - spread, 31, 3, 1, C.white);
+    c.rect(ox + 7 + spread, 31, 3, 1, C.white);
+  } else {
+    c.rect(ox + 5, legY, 2, legLen - 1, C.shadow);
+    c.rect(ox + 9, legY, 2, legLen - 1, C.shadow);
+    c.rect(ox + 4, 31, 3, 1, C.white);
+    c.rect(ox + 9, 31, 3, 1, C.white);
+  }
+}
+
+{
+  const c = canvas(16 * 8, 32);
+  for (let f = 0; f < 8; f++) drawPlayerFrame(c, f * 16, f);
+  save('sprites/player.png', c);
+}
+
+// ---------------------------------------------------------------------------
+// Arcade tileset, 8 tiles of 16x16 in one row (Tiled ids 0-7).
+// 0 ground top, 1 ground fill, 2 neon block, 3 one-way platform,
+// 4 arrow sign, 5 floor lamp, 6 lit window, 7 cabinet screen
+{
+  const c = canvas(16 * 8, 16);
+  const tile = (i, fn) => fn(i * 16);
+  tile(0, (x) => {
+    c.rect(x, 0, 16, 16, C.night);
+    c.rect(x, 0, 16, 2, C.cyan);
+    c.rect(x, 2, 16, 1, C.teal);
+    for (let i = 2; i < 16; i += 6) c.px(x + i, 6, C.pink);
+    c.rect(x, 15, 16, 1, C.deep);
+  });
+  tile(1, (x) => {
+    c.rect(x, 0, 16, 16, C.night);
+    c.rect(x, 7, 16, 1, C.deep);
+    c.rect(x + 7, 0, 1, 16, C.deep);
+    c.px(x + 3, 3, C.purple); c.px(x + 12, 11, C.purple);
+  });
+  tile(2, (x) => {
+    c.rect(x, 0, 16, 16, C.purple);
+    c.rect(x, 0, 16, 1, C.pink); c.rect(x, 15, 16, 1, C.pink);
+    c.rect(x, 0, 1, 16, C.pink); c.rect(x + 15, 0, 1, 16, C.pink);
+    c.rect(x + 3, 3, 10, 10, C.deep);
+    c.rect(x + 5, 5, 6, 6, C.violet);
+  });
+  tile(3, (x) => {
+    c.rect(x, 0, 16, 3, C.cyan);
+    c.rect(x, 3, 16, 1, C.teal);
+    for (let i = 1; i < 16; i += 4) c.rect(x + i, 1, 2, 1, C.white);
+  });
+  tile(4, (x) => {
+    c.rect(x + 2, 6, 8, 4, C.pink);
+    for (let i = 0; i < 5; i++) c.rect(x + 10 + i, 3 + i, 1, 10 - i * 2, C.pink);
+  });
+  tile(5, (x) => {
+    c.rect(x + 7, 4, 2, 12, C.shadow);
+    c.rect(x + 4, 1, 8, 3, C.hotpink);
+    c.rect(x + 5, 4, 6, 1, C.pink, 140);
+  });
+  tile(6, (x) => {
+    c.rect(x + 2, 2, 12, 12, C.deep);
+    c.rect(x + 3, 3, 4, 4, C.cyan, 200);
+    c.rect(x + 9, 3, 4, 4, C.hotpink, 200);
+    c.rect(x + 3, 9, 4, 4, C.violet, 200);
+    c.rect(x + 9, 9, 4, 4, C.cyan, 120);
+  });
+  tile(7, (x) => {
+    c.rect(x, 0, 16, 16, C.shadow);
+    c.rect(x + 2, 2, 12, 9, C.void);
+    for (let y = 3; y < 11; y += 2) c.rect(x + 3, y, 10, 1, C.teal);
+    c.px(x + 6, 6, C.pink); c.px(x + 9, 5, C.cyan);
+    c.rect(x + 4, 13, 2, 2, C.pink); c.rect(x + 10, 13, 2, 2, C.cyan);
+  });
+  save('tiles/arcade.png', c);
+}
+
+// ---------------------------------------------------------------------------
+// Backgrounds (320x180, tile horizontally)
+{
+  const c = canvas(320, 180);
+  for (let y = 0; y < 180; y++) {
+    const col = y < 60 ? C.void : y < 110 ? C.night : C.deep;
+    c.rect(0, y, 320, 1, col);
+  }
+  // stars (deterministic pseudo-random)
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 70; i++) c.px(Math.floor(rnd() * 320), Math.floor(rnd() * 100), rnd() > 0.8 ? C.cyan : C.white, 200);
+  // striped neon sun
+  const cx = 160, cy = 118, r = 42;
+  for (let y = cy - r; y < cy; y++) {
+    if ((y - (cy - r)) > 22 && (y % 5 === 0 || y % 5 === 1)) continue;
+    const half = Math.floor(Math.sqrt(r * r - (y - cy) * (y - cy)));
+    c.rect(cx - half, y, half * 2, 1, y < cy - 20 ? C.hotpink : C.pink);
+  }
+  save('backgrounds/arcade-far.png', c);
+}
+{
+  const c = canvas(320, 180);
+  let seed = 3;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  let x = 0;
+  while (x < 320) {
+    const w = 18 + Math.floor(rnd() * 26);
+    const h = 30 + Math.floor(rnd() * 70);
+    c.rect(x, 180 - h, w - 2, h, C.void);
+    c.rect(x, 180 - h, w - 2, 1, C.purple);
+    for (let wy = 180 - h + 4; wy < 176; wy += 6)
+      for (let wx = x + 3; wx < x + w - 5; wx += 5)
+        if (rnd() > 0.65) c.rect(wx, wy, 2, 2, rnd() > 0.5 ? C.pink : C.cyan, 180);
+    x += w;
+  }
+  save('backgrounds/arcade-near.png', c);
+}
+
+// ---------------------------------------------------------------------------
+// Test level as Tiled JSON map. Tile values are Tiled gids (tile id + 1), 0 = empty.
+{
+  const W = 160, H = 12;
+  const ground = new Array(W * H).fill(0);
+  const decor = new Array(W * H).fill(0);
+  const set = (layer, x, y, id) => { if (x >= 0 && x < W && y >= 0 && y < H) layer[y * W + x] = id + 1; };
+  const floor = (x0, x1, top = 10) => {
+    for (let x = x0; x <= x1; x++) { set(ground, x, top, 0); for (let y = top + 1; y < H; y++) set(ground, x, y, 1); }
+  };
+  const block = (x0, y0, w, h) => { for (let x = x0; x < x0 + w; x++) for (let y = y0; y < y0 + h; y++) set(ground, x, y, 2); };
+  const oneWay = (x0, y, w) => { for (let x = x0; x < x0 + w; x++) set(ground, x, y, 3); };
+
+  // left wall
+  block(0, 0, 1, 10);
+  // start area
+  floor(0, 24);
+  set(decor, 6, 9, 5); set(decor, 14, 9, 5); set(decor, 20, 9, 4);
+  set(decor, 10, 5, 6); set(decor, 11, 5, 6);
+  // small steps
+  floor(25, 40); block(26, 9, 2, 1); block(30, 8, 2, 2); block(34, 7, 2, 3);
+  // gaps: 2, 3, 4 tiles wide
+  floor(43, 50); floor(54, 60); floor(65, 74);
+  // one-way platforms above a pit
+  oneWay(78, 8, 4); oneWay(84, 6, 4); oneWay(90, 8, 4);
+  floor(75, 76); floor(96, 110);
+  // jump-height test: walls of 2, 3 and 4 tiles
+  block(100, 8, 1, 2); block(104, 7, 1, 3); block(108, 6, 1, 4);
+  // staircase of floating blocks
+  floor(111, 159);
+  block(116, 8, 2, 1); block(120, 6, 2, 1); block(124, 4, 2, 1); oneWay(128, 4, 6);
+  // cabinets at the end (future arcade portal)
+  set(decor, 150, 9, 7); set(decor, 152, 9, 7); set(decor, 154, 9, 7);
+  set(decor, 146, 9, 4);
+  block(159, 0, 1, 10);
+
+  const prop = (name, value) => ({ name, type: 'bool', value });
+  const map = {
+    compressionlevel: -1,
+    width: W, height: H, tilewidth: 16, tileheight: 16,
+    infinite: false, orientation: 'orthogonal', renderorder: 'right-down',
+    tiledversion: '1.10.2', type: 'map', version: '1.10',
+    nextlayerid: 4, nextobjectid: 2,
+    layers: [
+      { id: 1, name: 'decor', type: 'tilelayer', x: 0, y: 0, width: W, height: H, opacity: 1, visible: true, data: decor },
+      { id: 2, name: 'ground', type: 'tilelayer', x: 0, y: 0, width: W, height: H, opacity: 1, visible: true, data: ground },
+      {
+        id: 3, name: 'entities', type: 'objectgroup', draworder: 'topdown', x: 0, y: 0, opacity: 1, visible: true,
+        objects: [{ id: 1, name: 'player', type: 'player-spawn', point: true, x: 40, y: 160, width: 0, height: 0, rotation: 0, visible: true }],
+      },
+    ],
+    tilesets: [{
+      firstgid: 1, name: 'arcade', image: '../tiles/arcade.png', imagewidth: 128, imageheight: 16,
+      tilewidth: 16, tileheight: 16, tilecount: 8, columns: 8, margin: 0, spacing: 0,
+      tiles: [
+        { id: 0, properties: [prop('collides', true)] },
+        { id: 1, properties: [prop('collides', true)] },
+        { id: 2, properties: [prop('collides', true)] },
+        { id: 3, properties: [prop('oneWay', true)] },
+      ],
+    }],
+  };
+  saveJson('maps/testlevel.json', map);
+}

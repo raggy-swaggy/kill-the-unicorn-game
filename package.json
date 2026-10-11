@@ -1,0 +1,20 @@
+{
+  "name": "kill-the-unicorn-game",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "gen:assets": "node tools/gen-placeholders.mjs"
+  },
+  "dependencies": {
+    "phaser": "^4.2.1"
+  },
+  "devDependencies": {
+    "pngjs": "^7.0.0",
+    "typescript": "~5.9.3",
+    "vite": "^8.0.0"
+  }
+}
