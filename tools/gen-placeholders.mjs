@@ -1,4 +1,4 @@
-// Generates placeholder PNGs and the test level into public/assets.
+// Generates placeholder PNGs into public/assets.
 // Existing files are kept so real art is never overwritten; pass --force to regenerate everything.
 import { PNG } from 'pngjs';
 import fs from 'node:fs';
@@ -133,62 +133,99 @@ function drawPlayerFrame(c, ox, frame) {
 }
 
 // ---------------------------------------------------------------------------
-// Arcade tileset, 8 tiles of 16x16 in one row (Tiled ids 0-7).
-// 0 ground top, 1 ground fill, 2 neon block, 3 one-way platform,
-// 4 arrow sign, 5 floor lamp, 6 lit window, 7 cabinet screen
-{
-  const c = canvas(16 * 8, 16);
-  const tile = (i, fn) => fn(i * 16);
-  tile(0, (x) => {
-    c.rect(x, 0, 16, 16, C.night);
-    c.rect(x, 0, 16, 2, C.cyan);
-    c.rect(x, 2, 16, 1, C.teal);
-    for (let i = 2; i < 16; i += 6) c.px(x + i, 6, C.pink);
-    c.rect(x, 15, 16, 1, C.deep);
-  });
-  tile(1, (x) => {
-    c.rect(x, 0, 16, 16, C.night);
-    c.rect(x, 7, 16, 1, C.deep);
-    c.rect(x + 7, 0, 1, 16, C.deep);
-    c.px(x + 3, 3, C.purple); c.px(x + 12, 11, C.purple);
-  });
-  tile(2, (x) => {
-    c.rect(x, 0, 16, 16, C.purple);
-    c.rect(x, 0, 16, 1, C.pink); c.rect(x, 15, 16, 1, C.pink);
-    c.rect(x, 0, 1, 16, C.pink); c.rect(x + 15, 0, 1, 16, C.pink);
-    c.rect(x + 3, 3, 10, 10, C.deep);
-    c.rect(x + 5, 5, 6, 6, C.violet);
-  });
-  tile(3, (x) => {
-    c.rect(x, 0, 16, 3, C.cyan);
-    c.rect(x, 3, 16, 1, C.teal);
-    for (let i = 1; i < 16; i += 4) c.rect(x + i, 1, 2, 1, C.white);
-  });
-  tile(4, (x) => {
-    c.rect(x + 2, 6, 8, 4, C.pink);
-    for (let i = 0; i < 5; i++) c.rect(x + 10 + i, 3 + i, 1, 10 - i * 2, C.pink);
-  });
-  tile(5, (x) => {
-    c.rect(x + 7, 4, 2, 12, C.shadow);
-    c.rect(x + 4, 1, 8, 3, C.hotpink);
-    c.rect(x + 5, 4, 6, 1, C.pink, 140);
-  });
-  tile(6, (x) => {
-    c.rect(x + 2, 2, 12, 12, C.deep);
-    c.rect(x + 3, 3, 4, 4, C.cyan, 200);
-    c.rect(x + 9, 3, 4, 4, C.hotpink, 200);
-    c.rect(x + 3, 9, 4, 4, C.violet, 200);
-    c.rect(x + 9, 9, 4, 4, C.cyan, 120);
-  });
-  tile(7, (x) => {
-    c.rect(x, 0, 16, 16, C.shadow);
-    c.rect(x + 2, 2, 12, 9, C.void);
-    for (let y = 3; y < 11; y += 2) c.rect(x + 3, y, 10, 1, C.teal);
-    c.px(x + 6, 6, C.pink); c.px(x + 9, 5, C.cyan);
-    c.rect(x + 4, 13, 2, 2, C.pink); c.rect(x + 10, 13, 2, 2, C.cyan);
-  });
-  save('tiles/arcade.png', c);
+// Tilesets: 12 tiles of 16x16 in one row. Shared id convention (see README):
+// 0 ground top, 1 ground fill, 2 solid block, 3 one-way platform, 4 hazard, 5-11 decoration.
+function line(c, x0, y0, x1, y1, hex) {
+  const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy;
+  for (;;) {
+    c.px(x0, y0, hex);
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+  }
 }
+function pattern(c, ox, oy, rows, colors) {
+  rows.forEach((row, y) => [...row].forEach((ch, x) => { if (colors[ch]) c.px(ox + x, oy + y, colors[ch]); }));
+}
+function tileset(rel, draws) {
+  const c = canvas(16 * 12, 16);
+  draws.forEach((fn, i) => fn && fn(c, i * 16));
+  save(rel, c);
+}
+
+tileset('tiles/arcade.png', [
+  (c, x) => { c.rect(x, 0, 16, 16, C.night); c.rect(x, 0, 16, 2, C.cyan); c.rect(x, 2, 16, 1, C.teal); for (let i = 2; i < 16; i += 6) c.px(x + i, 6, C.pink); c.rect(x, 15, 16, 1, C.deep); },
+  (c, x) => { c.rect(x, 0, 16, 16, C.night); c.rect(x, 7, 16, 1, C.deep); c.rect(x + 7, 0, 1, 16, C.deep); c.px(x + 3, 3, C.purple); c.px(x + 12, 11, C.purple); },
+  (c, x) => { c.rect(x, 0, 16, 16, C.purple); c.rect(x, 0, 16, 1, C.pink); c.rect(x, 15, 16, 1, C.pink); c.rect(x, 0, 1, 16, C.pink); c.rect(x + 15, 0, 1, 16, C.pink); c.rect(x + 3, 3, 10, 10, C.deep); c.rect(x + 5, 5, 6, 6, C.violet); },
+  (c, x) => { c.rect(x, 0, 16, 3, C.cyan); c.rect(x, 3, 16, 1, C.teal); for (let i = 1; i < 16; i += 4) c.rect(x + i, 1, 2, 1, C.white); },
+  // hazard: electric floor
+  (c, x) => { c.rect(x, 8, 16, 8, C.void); for (let i = 0; i < 16; i++) c.px(x + i, 10 + ((i * 7) % 5), i % 3 ? C.cyan : C.white); c.rect(x, 15, 16, 1, C.pink); line(c, x + 2, 15, x + 5, 6, C.white); line(c, x + 11, 15, x + 13, 7, C.cyan); },
+  (c, x) => { c.rect(x + 2, 6, 8, 4, C.pink); for (let i = 0; i < 5; i++) c.rect(x + 10 + i, 3 + i, 1, 10 - i * 2, C.pink); },
+  (c, x) => { c.rect(x + 7, 4, 2, 12, C.shadow); c.rect(x + 4, 1, 8, 3, C.hotpink); c.rect(x + 5, 4, 6, 1, C.pink, 140); },
+  (c, x) => { c.rect(x + 2, 2, 12, 12, C.deep); c.rect(x + 3, 3, 4, 4, C.cyan, 200); c.rect(x + 9, 3, 4, 4, C.hotpink, 200); c.rect(x + 3, 9, 4, 4, C.violet, 200); c.rect(x + 9, 9, 4, 4, C.cyan, 120); },
+  // cabinet top (marquee + screen)
+  (c, x) => { c.rect(x + 1, 0, 14, 16, C.shadow); c.rect(x + 1, 0, 14, 3, C.pink); c.rect(x + 3, 5, 10, 9, C.void); for (let y = 6; y < 14; y += 2) c.rect(x + 4, y, 8, 1, C.teal); c.px(x + 6, 9, C.pink); c.px(x + 9, 8, C.cyan); },
+  // cabinet bottom (controls)
+  (c, x) => { c.rect(x + 1, 0, 14, 16, C.shadow); c.rect(x, 0, 16, 3, C.deep); c.rect(x + 3, 0, 1, 2, C.white); c.rect(x + 3, 0, 2, 1, C.pink); c.rect(x + 9, 1, 2, 1, C.cyan); c.rect(x + 12, 1, 2, 1, C.pink); c.rect(x + 6, 8, 4, 3, C.void); c.rect(x + 7, 9, 2, 1, C.hotpink); },
+  // coin sign
+  (c, x) => { c.rect(x + 3, 3, 10, 10, C.pink); c.rect(x + 4, 2, 8, 12, C.pink); c.rect(x + 5, 4, 6, 8, C.hotpink); c.rect(x + 7, 5, 2, 6, C.void); },
+  // poster
+  (c, x) => { c.rect(x + 2, 1, 12, 14, C.purple); c.rect(x + 3, 2, 10, 12, C.deep); pattern(c, x + 5, 4, ['..#..', '.###.', '#####', '.#.#.', '#...#'], { '#': C.pink }); c.rect(x + 4, 11, 8, 1, C.cyan); },
+]);
+
+const digits = { '4': ['#.#', '#.#', '###', '..#', '..#'], '0': ['###', '#.#', '#.#', '#.#', '###'] };
+tileset('tiles/datahighway.png', [
+  (c, x) => { c.rect(x, 0, 16, 16, C.deep); c.rect(x, 0, 16, 1, C.white); c.rect(x, 1, 16, 1, C.cyan); for (let i = 0; i < 16; i += 4) c.px(x + i, 5, C.teal); c.rect(x, 15, 16, 1, C.night); },
+  (c, x) => { c.rect(x, 0, 16, 16, C.night); c.rect(x, 0, 16, 1, C.teal, 120); c.rect(x, 8, 16, 1, C.teal, 120); c.rect(x, 0, 1, 16, C.teal, 120); c.rect(x + 8, 0, 1, 16, C.teal, 120); },
+  // GUI window block
+  (c, x) => { c.rect(x, 0, 16, 16, C.white); c.rect(x, 0, 16, 4, C.cyan); c.rect(x + 12, 1, 3, 2, C.pink); c.rect(x + 1, 4, 14, 11, C.deep); c.rect(x + 3, 6, 8, 1, C.teal); c.rect(x + 3, 8, 6, 1, C.teal); c.rect(x + 3, 10, 9, 1, C.teal); },
+  // loading bar (one-way)
+  (c, x) => { c.rect(x, 0, 16, 6, C.white); c.rect(x, 1, 16, 4, C.void); for (let i = 1; i < 16; i += 3) c.rect(x + i, 2, 2, 2, C.cyan); },
+  // hazard: error static
+  (c, x) => { let s = 11; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647); c.rect(x, 7, 16, 9, C.void); for (let i = 0; i < 60; i++) c.px(x + Math.floor(r() * 16), 7 + Math.floor(r() * 9), r() > 0.5 ? C.pink : C.white); c.rect(x, 7, 16, 1, C.pink); },
+  // folder
+  (c, x) => { c.rect(x + 2, 4, 5, 2, C.hotpink); c.rect(x + 2, 6, 12, 8, C.hotpink); c.rect(x + 2, 7, 12, 1, C.pink); },
+  // cursor icon
+  (c, x) => pattern(c, x + 5, 3, ['#', '##', '#.#', '#..#', '#...#', '#....#', '#..###', '#.#', '##'], { '#': C.void, '.': C.white }),
+  // 404
+  (c, x) => { c.rect(x + 1, 3, 14, 9, C.void); pattern(c, x + 2, 5, digits['4'], { '#': C.pink }); pattern(c, x + 6, 5, digits['0'], { '#': C.pink }); pattern(c, x + 10, 5, digits['4'], { '#': C.pink }); },
+  // empty progress bar
+  (c, x) => { c.rect(x, 6, 16, 5, C.white); c.rect(x, 7, 16, 3, C.void); c.rect(x, 7, 5, 3, C.cyan); },
+  // mail @
+  (c, x) => { c.rect(x + 2, 4, 12, 9, C.white); line(c, x + 2, 4, x + 8, 9, C.teal); line(c, x + 13, 4, x + 8, 9, C.teal); },
+  // floppy
+  (c, x) => { c.rect(x + 3, 3, 10, 10, C.cyan); c.rect(x + 5, 3, 6, 4, C.white); c.rect(x + 9, 4, 1, 2, C.deep); c.rect(x + 5, 9, 6, 4, C.deep); },
+  // sparkle
+  (c, x) => { c.rect(x + 7, 3, 2, 10, C.white); c.rect(x + 3, 7, 10, 2, C.white); c.rect(x + 6, 6, 4, 4, C.cyan); },
+]);
+
+tileset('tiles/catacombs.png', [
+  (c, x) => { c.rect(x, 0, 16, 16, C.deep); c.rect(x, 0, 16, 2, C.violet); c.rect(x, 2, 16, 1, C.purple); c.px(x + 4, 1, C.deep); c.px(x + 11, 0, C.purple); c.rect(x, 9, 16, 1, C.night); c.rect(x + 6, 3, 1, 6, C.night); },
+  (c, x) => { c.rect(x, 0, 16, 16, C.night); c.rect(x, 0, 16, 1, C.deep); c.rect(x, 8, 16, 1, C.deep); c.rect(x + 4, 0, 1, 8, C.deep); c.rect(x + 12, 8, 1, 8, C.deep); },
+  (c, x) => { c.rect(x, 0, 16, 16, C.purple); c.rect(x, 0, 16, 1, C.violet); c.rect(x, 15, 16, 1, C.deep); c.rect(x + 3, 3, 10, 10, C.deep); line(c, x + 5, 5, x + 10, 10, C.pink); line(c, x + 10, 5, x + 5, 10, C.pink); },
+  // bone ledge (one-way)
+  (c, x) => { c.rect(x, 1, 16, 3, C.white); c.rect(x, 4, 16, 1, C.violet); c.rect(x + 1, 0, 2, 5, C.white); c.rect(x + 13, 0, 2, 5, C.white); },
+  // spikes
+  (c, x) => { for (let s = 0; s < 4; s++) { for (let i = 0; i < 4; i++) c.rect(x + s * 4 + i, 16 - (i < 2 ? (i + 1) * 4 : (4 - i) * 4), 1, i < 2 ? (i + 1) * 4 : (4 - i) * 4, i === 1 ? C.white : C.violet); } c.rect(x, 15, 16, 1, C.purple); },
+  // candle
+  (c, x) => { c.rect(x + 6, 8, 4, 8, C.white); c.rect(x + 6, 15, 4, 1, C.violet); c.rect(x + 7, 4, 2, 4, C.hotpink); c.px(x + 7, 3, C.pink); c.rect(x + 7, 6, 2, 2, C.white); },
+  // pentagram
+  (c, x) => { const p = [...Array(5)].map((_, i) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5; return [Math.round(x + 8 + Math.cos(a) * 7), Math.round(8 + Math.sin(a) * 7)]; }); for (let i = 0; i < 5; i++) { const [ax, ay] = p[i], [bx, by] = p[(i + 2) % 5]; line(c, ax, ay, bx, by, C.pink); } },
+  // skull
+  (c, x) => pattern(c, x + 3, 4, ['.#####.', '#######', '#..#..#', '#######', '.##.##.', '.#.#.#.'], { '#': C.white, '.': null }),
+  // chain
+  (c, x) => { for (let y = 0; y < 16; y += 4) { c.rect(x + 7, y, 2, 3, C.violet); c.px(x + 6, y + 1, C.violet); c.px(x + 9, y + 1, C.violet); } },
+  // rune
+  (c, x) => { line(c, x + 8, 3, x + 8, 13, C.cyan); line(c, x + 8, 5, x + 12, 8, C.cyan); line(c, x + 8, 9, x + 4, 12, C.cyan); },
+  // cobweb
+  (c, x) => { line(c, x, 0, x + 12, 12, C.violet); line(c, x, 0, x + 15, 4, C.violet); line(c, x, 0, x + 4, 15, C.violet); line(c, x + 8, 2, x + 2, 8, C.violet); },
+  // eye glyph
+  (c, x) => { c.rect(x + 3, 6, 10, 4, C.pink); c.rect(x + 5, 5, 6, 6, C.pink); c.rect(x + 6, 6, 4, 4, C.void); c.rect(x + 7, 7, 2, 2, C.white); },
+]);
+
 
 // ---------------------------------------------------------------------------
 // Backgrounds (320x180, tile horizontally)
@@ -227,6 +264,100 @@ function drawPlayerFrame(c, ox, frame) {
     x += w;
   }
   save('backgrounds/arcade-near.png', c);
+}
+{
+  // Data highway, far: sky with binary rain and a perspective grid floor
+  const c = canvas(320, 180);
+  for (let y = 0; y < 180; y++) c.rect(0, y, 320, 1, y < 70 ? C.void : y < 100 ? C.night : C.deep);
+  let seed = 5;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 90; i++) c.rect(Math.floor(rnd() * 320), Math.floor(rnd() * 96), 1, 2 + Math.floor(rnd() * 3), rnd() > 0.7 ? C.cyan : C.teal, 160);
+  const horizon = 100;
+  c.rect(0, horizon, 320, 1, C.pink);
+  for (let k = 1; k < 9; k++) { const y = horizon + Math.round(k * k * 1.1); if (y < 180) c.rect(0, y, 320, 1, C.purple); }
+  for (let gx = -320; gx <= 640; gx += 40) line(c, 160 + Math.round((gx - 160) * 0.15), horizon, gx, 180, C.purple);
+  save('backgrounds/datahighway-far.png', c);
+}
+{
+  // Data highway, near: floating pop-up windows
+  const c = canvas(320, 180);
+  let seed = 9;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 7; i++) {
+    const w = 30 + Math.floor(rnd() * 30), h = 20 + Math.floor(rnd() * 20);
+    const x = Math.floor(i * 46 + rnd() * 10), y = 20 + Math.floor(rnd() * 90);
+    c.rect(x, y, w, h, C.night, 200);
+    c.rect(x, y, w, 4, C.teal);
+    c.rect(x + w - 4, y + 1, 3, 2, C.pink);
+    c.rect(x, y, 1, h, C.teal); c.rect(x + w - 1, y, 1, h, C.teal); c.rect(x, y + h - 1, w, 1, C.teal);
+    for (let l = y + 7; l < y + h - 3; l += 3) c.rect(x + 3, l, Math.floor(rnd() * (w - 8)) + 2, 1, C.deep);
+  }
+  save('backgrounds/datahighway-near.png', c);
+}
+{
+  // Catacombs, far: arches and a faint pentagram
+  const c = canvas(320, 180);
+  for (let y = 0; y < 180; y++) c.rect(0, y, 320, 1, y < 90 ? C.void : C.night);
+  for (let ax = 0; ax < 320; ax += 80) {
+    for (let y = 40; y < 180; y++) {
+      const half = y < 70 ? Math.round(Math.sqrt(Math.max(0, 900 - (70 - y) * (70 - y)))) : 30;
+      c.rect(ax + 40 - half - 6, y, 6, 1, C.deep);
+      c.rect(ax + 40 + half, y, 6, 1, C.deep);
+    }
+  }
+  const p = [...Array(5)].map((_, i) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5; return [Math.round(160 + Math.cos(a) * 40), Math.round(80 + Math.sin(a) * 40)]; });
+  for (let i = 0; i < 5; i++) line(c, ...p[i], ...p[(i + 2) % 5], C.purple);
+  for (let a = 0; a < 360; a += 2) c.px(Math.round(160 + Math.cos((a * Math.PI) / 180) * 44), Math.round(80 + Math.sin((a * Math.PI) / 180) * 44), C.purple);
+  save('backgrounds/catacombs-far.png', c);
+}
+{
+  // Catacombs, near: pillars with candle glow
+  const c = canvas(320, 180);
+  for (let px = 20; px < 320; px += 100) {
+    c.rect(px, 30, 18, 150, C.void);
+    c.rect(px - 3, 30, 24, 6, C.void);
+    c.rect(px + 1, 36, 1, 144, C.deep);
+    c.rect(px + 22, 110, 3, 8, C.white, 200); c.rect(px + 23, 106, 1, 4, C.pink);
+    for (let r = 1; r < 8; r++) c.rect(px + 23 - r, 107 - r, r * 2, r * 2, C.pink, 18);
+  }
+  save('backgrounds/catacombs-near.png', c);
+}
+{
+  // Cursed arcade cabinet (level portal), 32x48, 2 frames of screen flicker
+  const c = canvas(64, 48);
+  for (let f = 0; f < 2; f++) {
+    const x = f * 32;
+    c.rect(x + 4, 4, 24, 44, C.shadow);
+    c.rect(x + 2, 0, 28, 8, C.pink);
+    c.rect(x + 4, 2, 24, 4, C.void);
+    pattern(c, x + 6, 3, ['#.#.##.#.#.##.#.#'], { '#': f ? C.cyan : C.white });
+    c.rect(x + 6, 10, 20, 16, C.void);
+    for (let y = 11; y < 26; y += 2) c.rect(x + 7, y, 18, 1, f ? C.purple : C.deep);
+    c.rect(x + 10, 15, 4, 3, f ? C.white : C.pink); c.rect(x + 18, 15, 4, 3, f ? C.white : C.pink);
+    c.rect(x + 12, 21, 8, 1, C.pink);
+    c.rect(x + 2, 28, 28, 5, C.deep);
+    c.rect(x + 8, 26, 2, 3, C.white); c.rect(x + 7, 25, 4, 2, C.pink);
+    c.rect(x + 18, 29, 3, 2, C.cyan); c.rect(x + 23, 29, 3, 2, C.pink);
+    c.rect(x + 12, 38, 8, 5, C.void); c.rect(x + 15, 39, 2, 3, f ? C.hotpink : C.pink);
+    c.rect(x + 2, 0, 2, 48, C.pink, 160); c.rect(x + 28, 0, 2, 48, C.pink, 160);
+  }
+  save('sprites/cursed-cabinet.png', c);
+}
+{
+  // Portal between sections, 16x32, 2 frames
+  const c = canvas(32, 32);
+  for (let f = 0; f < 2; f++) {
+    const x = f * 16;
+    const cols = f ? [C.cyan, C.pink, C.white, C.violet] : [C.pink, C.white, C.violet, C.cyan];
+    for (let r = 0; r < 4; r++) {
+      for (let a = 0; a < 360; a += 4) {
+        const px = Math.round(x + 8 + Math.cos((a * Math.PI) / 180) * (7 - r * 1.6));
+        const py = Math.round(17 + Math.sin((a * Math.PI) / 180) * (14 - r * 3));
+        c.px(px, py, cols[r]);
+      }
+    }
+  }
+  save('sprites/portal.png', c);
 }
 
 // ---------------------------------------------------------------------------
@@ -404,93 +535,4 @@ function drawPlayerFrame(c, ox, frame) {
     g.forEach((row, y) => [...row].forEach((v, x) => { if (v === '#') c.px(ox + x, oy + y, C.white); }));
   });
   save('fonts/pixel.png', c);
-}
-
-// ---------------------------------------------------------------------------
-// Test level as Tiled JSON map. Tile values are Tiled gids (tile id + 1), 0 = empty.
-{
-  const W = 160, H = 12;
-  const ground = new Array(W * H).fill(0);
-  const decor = new Array(W * H).fill(0);
-  const set = (layer, x, y, id) => { if (x >= 0 && x < W && y >= 0 && y < H) layer[y * W + x] = id + 1; };
-  const floor = (x0, x1, top = 10) => {
-    for (let x = x0; x <= x1; x++) { set(ground, x, top, 0); for (let y = top + 1; y < H; y++) set(ground, x, y, 1); }
-  };
-  const block = (x0, y0, w, h) => { for (let x = x0; x < x0 + w; x++) for (let y = y0; y < y0 + h; y++) set(ground, x, y, 2); };
-  const oneWay = (x0, y, w) => { for (let x = x0; x < x0 + w; x++) set(ground, x, y, 3); };
-
-  // left wall
-  block(0, 0, 1, 10);
-  // start area
-  floor(0, 24);
-  set(decor, 6, 9, 5); set(decor, 14, 9, 5); set(decor, 20, 9, 4);
-  set(decor, 10, 5, 6); set(decor, 11, 5, 6);
-  // small steps
-  floor(25, 40); block(26, 9, 2, 1); block(30, 8, 2, 2); block(34, 7, 2, 3);
-  // gaps: 2, 3, 4 tiles wide
-  floor(43, 50); floor(54, 60); floor(65, 74);
-  // one-way platforms above a pit
-  oneWay(78, 8, 4); oneWay(84, 6, 4); oneWay(90, 8, 4);
-  floor(75, 76); floor(96, 110);
-  // jump-height test: walls of 2, 3 and 4 tiles
-  block(100, 8, 1, 2); block(104, 7, 1, 3); block(108, 6, 1, 4);
-  // staircase of floating blocks
-  floor(111, 159);
-  block(116, 8, 2, 1); block(120, 6, 2, 1); block(124, 4, 2, 1); oneWay(128, 4, 6);
-  // cabinets at the end (future arcade portal)
-  set(decor, 150, 9, 7); set(decor, 152, 9, 7); set(decor, 154, 9, 7);
-  set(decor, 146, 9, 4);
-  block(159, 0, 1, 10);
-
-  const prop = (name, value) => ({ name, type: 'bool', value });
-  // Entities are point objects; x/y is where the feet stand.
-  const objects = [];
-  const obj = (type, x, y, props = {}) => objects.push({
-    id: objects.length + 1, name: '', type, point: true, x, y, width: 0, height: 0, rotation: 0, visible: true,
-    properties: Object.entries(props).map(([name, value]) => ({ name, type: typeof value === 'number' ? 'int' : 'string', value })),
-  });
-  const T = 16;
-  obj('player-spawn', 40, 160);
-  obj('pickup', 9 * T, 140, { kind: 'cassette' });
-  obj('pickup', 31 * T, 116, { kind: 'cassette' });
-  obj('pickup', 52 * T, 112, { kind: 'cassette' });
-  obj('pickup', 86 * T, 80, { kind: 'cassette' });
-  obj('pickup', 125 * T, 48, { kind: 'cassette' });
-  obj('pickup', 72 * T, 150, { kind: 'heart' });
-  obj('enemy', 18 * T, 160, { enemyType: 'patrol' });
-  obj('enemy', 47 * T, 160, { enemyType: 'patrol' });
-  obj('enemy', 57 * T, 110, { enemyType: 'flyer', patrolDistance: 64 });
-  obj('enemy', 70 * T, 160, { enemyType: 'shooter' });
-  obj('enemy', 88 * T, 56, { enemyType: 'flyer', patrolDistance: 96 });
-  obj('enemy', 106 * T, 160, { enemyType: 'patrol' });
-  obj('enemy', 136 * T, 160, { enemyType: 'shooter' });
-  obj('enemy', 142 * T, 120, { enemyType: 'flyer', patrolDistance: 48 });
-  obj('checkpoint', 44 * T, 160);
-  obj('checkpoint', 112 * T, 160);
-  const map = {
-    compressionlevel: -1,
-    width: W, height: H, tilewidth: 16, tileheight: 16,
-    infinite: false, orientation: 'orthogonal', renderorder: 'right-down',
-    tiledversion: '1.10.2', type: 'map', version: '1.10',
-    nextlayerid: 4, nextobjectid: objects.length + 1,
-    layers: [
-      { id: 1, name: 'decor', type: 'tilelayer', x: 0, y: 0, width: W, height: H, opacity: 1, visible: true, data: decor },
-      { id: 2, name: 'ground', type: 'tilelayer', x: 0, y: 0, width: W, height: H, opacity: 1, visible: true, data: ground },
-      {
-        id: 3, name: 'entities', type: 'objectgroup', draworder: 'topdown', x: 0, y: 0, opacity: 1, visible: true,
-        objects,
-      },
-    ],
-    tilesets: [{
-      firstgid: 1, name: 'arcade', image: '../tiles/arcade.png', imagewidth: 128, imageheight: 16,
-      tilewidth: 16, tileheight: 16, tilecount: 8, columns: 8, margin: 0, spacing: 0,
-      tiles: [
-        { id: 0, properties: [prop('collides', true)] },
-        { id: 1, properties: [prop('collides', true)] },
-        { id: 2, properties: [prop('collides', true)] },
-        { id: 3, properties: [prop('oneWay', true)] },
-      ],
-    }],
-  };
-  saveJson('maps/testlevel.json', map);
 }

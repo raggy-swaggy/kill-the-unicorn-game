@@ -1,8 +1,14 @@
 {
   "images": [
     { "key": "tiles-arcade", "url": "tiles/arcade.png" },
+    { "key": "tiles-datahighway", "url": "tiles/datahighway.png" },
+    { "key": "tiles-catacombs", "url": "tiles/catacombs.png" },
     { "key": "bg-arcade-far", "url": "backgrounds/arcade-far.png" },
     { "key": "bg-arcade-near", "url": "backgrounds/arcade-near.png" },
+    { "key": "bg-datahighway-far", "url": "backgrounds/datahighway-far.png" },
+    { "key": "bg-datahighway-near", "url": "backgrounds/datahighway-near.png" },
+    { "key": "bg-catacombs-far", "url": "backgrounds/catacombs-far.png" },
+    { "key": "bg-catacombs-near", "url": "backgrounds/catacombs-near.png" },
     { "key": "font-pixel", "url": "fonts/pixel.png" }
   ],
   "spritesheets": [
@@ -14,16 +20,37 @@
     { "key": "pickups", "url": "sprites/pickups.png", "frameWidth": 16, "frameHeight": 16 },
     { "key": "fx", "url": "sprites/fx.png", "frameWidth": 16, "frameHeight": 16 },
     { "key": "checkpoint", "url": "sprites/checkpoint.png", "frameWidth": 16, "frameHeight": 32 },
-    { "key": "hud", "url": "ui/hud.png", "frameWidth": 8, "frameHeight": 8 }
+    { "key": "hud", "url": "ui/hud.png", "frameWidth": 8, "frameHeight": 8 },
+    { "key": "cursed-cabinet", "url": "sprites/cursed-cabinet.png", "frameWidth": 32, "frameHeight": 48 },
+    { "key": "portal", "url": "sprites/portal.png", "frameWidth": 16, "frameHeight": 32 }
   ],
   "tilemaps": [
-    { "key": "testlevel", "url": "maps/testlevel.json" }
+    { "key": "level1", "url": "maps/level1.json" }
   ],
   "tilesets": {
-    "arcade": "tiles-arcade"
+    "arcade": "tiles-arcade",
+    "datahighway": "tiles-datahighway",
+    "catacombs": "tiles-catacombs"
   },
   "fonts": [
     { "key": "pixel", "image": "font-pixel", "width": 4, "height": 6, "charsPerRow": 16, "chars": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ" }
+  ],
+  "audio": [
+    { "key": "music-arcade", "urls": [ "audio/music/arcade.wav" ] },
+    { "key": "music-datahighway", "urls": [ "audio/music/datahighway.wav" ] },
+    { "key": "music-catacombs", "urls": [ "audio/music/catacombs.wav" ] },
+    { "key": "music-boss", "urls": [ "audio/music/boss.wav" ] },
+    { "key": "sfx-jump", "urls": [ "audio/sfx/jump.wav" ] },
+    { "key": "sfx-shoot", "urls": [ "audio/sfx/shoot.wav" ] },
+    { "key": "sfx-enemy-hit", "urls": [ "audio/sfx/enemy-hit.wav" ] },
+    { "key": "sfx-enemy-die", "urls": [ "audio/sfx/enemy-die.wav" ] },
+    { "key": "sfx-hurt", "urls": [ "audio/sfx/hurt.wav" ] },
+    { "key": "sfx-pickup", "urls": [ "audio/sfx/pickup.wav" ] },
+    { "key": "sfx-heart", "urls": [ "audio/sfx/heart.wav" ] },
+    { "key": "sfx-checkpoint", "urls": [ "audio/sfx/checkpoint.wav" ] },
+    { "key": "sfx-glitch", "urls": [ "audio/sfx/glitch.wav" ] },
+    { "key": "sfx-portal", "urls": [ "audio/sfx/portal.wav" ] },
+    { "key": "sfx-lose-life", "urls": [ "audio/sfx/lose-life.wav" ] }
   ],
   "animations": [
     { "key": "player-idle", "sheet": "player", "frames": [ 0, 1 ], "frameRate": 3, "repeat": -1 },
@@ -40,6 +67,8 @@
     { "key": "pickup-heart", "sheet": "pickups", "frames": [ 2 ], "frameRate": 1, "repeat": 0 },
     { "key": "fx-pop", "sheet": "fx", "frames": [ 0, 1, 2, 3 ], "frameRate": 20, "repeat": 0 },
     { "key": "checkpoint-off", "sheet": "checkpoint", "frames": [ 0 ], "frameRate": 1, "repeat": 0 },
-    { "key": "checkpoint-on", "sheet": "checkpoint", "frames": [ 1 ], "frameRate": 1, "repeat": 0 }
+    { "key": "checkpoint-on", "sheet": "checkpoint", "frames": [ 1 ], "frameRate": 1, "repeat": 0 },
+    { "key": "cursed-cabinet-idle", "sheet": "cursed-cabinet", "frames": [ 0, 0, 0, 1, 0, 1 ], "frameRate": 8, "repeat": -1 },
+    { "key": "portal-idle", "sheet": "portal", "frames": [ 0, 1 ], "frameRate": 6, "repeat": -1 }
   ]
 }

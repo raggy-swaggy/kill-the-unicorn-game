@@ -7,6 +7,8 @@ export interface AssetManifest {
   tilemaps: { key: string; url: string }[];
   /** Tiled tileset name -> image key, used when a map is built. */
   tilesets: Record<string, string>;
+  /** Several urls = same sound in different formats; the browser picks the first it can play. */
+  audio: { key: string; urls: string[] }[];
   /** Fixed-grid bitmap fonts: glyphs in `chars` order, `charsPerRow` per row. */
   fonts: { key: string; image: string; width: number; height: number; charsPerRow: number; chars: string }[];
   animations: { key: string; sheet: string; frames: number[]; frameRate: number; repeat: number }[];
@@ -27,6 +29,7 @@ export function queueManifest(scene: Phaser.Scene, manifest: AssetManifest): voi
     load.spritesheet(sheet.key, sheet.url, { frameWidth: sheet.frameWidth, frameHeight: sheet.frameHeight });
   }
   for (const map of manifest.tilemaps) load.tilemapTiledJSON(map.key, map.url);
+  for (const sound of manifest.audio) load.audio(sound.key, sound.urls);
 }
 
 export function createAnimations(scene: Phaser.Scene, manifest: AssetManifest): void {

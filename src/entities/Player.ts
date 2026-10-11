@@ -67,6 +67,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.lastJumpPressedAt = -Infinity;
       this.lastGroundedAt = -Infinity;
       this.rising = true;
+      this.scene.events.emit('player-jump');
     }
 
     // Variable jump height: releasing early cuts the upward speed.
@@ -99,6 +100,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!shot) return;
     this.lastShotAt = time;
     shot.fire(x, y, this.facing, { anim: 'riff-shot', speed: RIFF_SHOT.speed, lifetimeMs: RIFF_SHOT.lifetimeMs });
+    this.scene.events.emit('player-shoot');
   }
 
   get isInvulnerable(): boolean {

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "gen:assets": "node tools/gen-placeholders.mjs"
+    "gen:assets": "node tools/gen-placeholders.mjs && node tools/gen-audio.mjs && node tools/build-level1.mjs"
   },
   "dependencies": {
     "phaser": "^4.2.1"
