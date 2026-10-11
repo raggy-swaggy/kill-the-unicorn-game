@@ -223,9 +223,15 @@ export class GameScene extends Phaser.Scene {
       this.registry.set(STATE.hearts, hearts + 1);
       this.audio.sfx('heart');
     } else {
-      addTo(this.registry, STATE.cassettes, 1);
+      const cassettes = addTo(this.registry, STATE.cassettes, 1);
       addTo(this.registry, STATE.score, SCORE.cassette);
-      this.audio.sfx('pickup');
+      if (cassettes % SCORE.cassettesPerLife === 0) {
+        addTo(this.registry, STATE.lives, 1);
+        this.audio.sfx('1up');
+        this.game.events.emit('banner', '1UP!');
+      } else {
+        this.audio.sfx('pickup');
+      }
     }
     this.spawnPop(pickup.x, pickup.y - 8);
     pickup.destroy();

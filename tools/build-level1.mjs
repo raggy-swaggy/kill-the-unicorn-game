@@ -155,6 +155,7 @@ section('catacombs', 130, { title: '1-3 CURSED CATACOMBS', tileset: 'catacombs',
   a.ent('spawn', 3, 9, {}, 'catacombs-start');
   a.floor(0, 15);
   a.deco(5, 9, 5); a.deco(8, 4, 6); a.deco(10, 9, 5); a.deco(1, 1, 10);
+  a.ent('pickup', 8, 9, { kind: 'cassette' });
   a.ent('enemy', 13, 9, { enemyType: 'shooter' });
   // spike floor with a bone ledge above
   a.floor(16, 30);

@@ -61,7 +61,8 @@
     { "key": "sfx-stomp", "urls": [ "audio/sfx/stomp.wav" ] },
     { "key": "sfx-roar", "urls": [ "audio/sfx/roar.wav" ] },
     { "key": "sfx-boss-die", "urls": [ "audio/sfx/boss-die.wav" ] },
-    { "key": "sfx-win", "urls": [ "audio/sfx/win.wav" ] }
+    { "key": "sfx-win", "urls": [ "audio/sfx/win.wav" ] },
+    { "key": "sfx-1up", "urls": [ "audio/sfx/1up.wav" ] }
   ],
   "animations": [
     { "key": "player-idle", "sheet": "player", "frames": [ 0, 1 ], "frameRate": 3, "repeat": -1 },

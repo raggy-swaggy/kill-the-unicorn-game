@@ -52,7 +52,7 @@ Alle Werte für das Spielgefühl stehen zentral in `src/config/gameplay.ts`:
 - `HEALTH`: Herzen pro Leben, Anzahl Leben, Unverwundbarkeit nach Treffer, Rückstoss
 - `RIFF_SHOT`: Tempo, Feuerrate, Reichweite, Schaden
 - `ENEMIES`: Lebenspunkte, Punkte und Verhalten pro Gegnertyp
-- `SCORE`: Punkte pro Kassette
+- `SCORE`: Punkte pro Kassette (`cassette`) und wie viele Kassetten ein Extraleben geben (`cassettesPerLife`, Standard 10). Level 1 enthält 20 Kassetten, also maximal 2 Extraleben.
 - `BOSS`: Lebenspunkte des Einhorns, Punkte, Tempo der zweiten Phase, Timing der Angriffe (Laser, Stampfen, Glitzer-Salve)
 
 Tempo und Breakdowns der Musik stehen in `src/config/rhythm.ts` (siehe unten).
@@ -105,7 +105,7 @@ Animationen (welche Frames, wie schnell) werden ebenfalls im Manifest unter `ani
 | `audio/music/datahighway.wav` | Abschnitt 2, Datenautobahn |
 | `audio/music/catacombs.wav` | Abschnitt 3, Katakomben |
 | `audio/music/boss.wav` | Bossfight (läuft in der zweiten Phase etwas schneller) |
-| `audio/sfx/*.wav` | Soundeffekte: jump, shoot, enemy-hit, enemy-die, hurt, pickup, heart, checkpoint, glitch, portal, lose-life, boss-hit, laser-charge, laser, stomp, roar, boss-die, win |
+| `audio/sfx/*.wav` | Soundeffekte: jump, shoot, enemy-hit, enemy-die, hurt, pickup, heart, checkpoint, glitch, portal, lose-life, boss-hit, laser-charge, laser, stomp, roar, boss-die, win, 1up |
 
 Musik läuft in Endlosschleife, die Datei sollte also nahtlos loopen. Für echte Tracks empfehle ich MP3 oder OGG statt WAV (viel kleiner). Dazu die Datei ablegen und im Manifest unter `audio` die `urls` anpassen, z. B. `["audio/music/arcade.ogg", "audio/music/arcade.mp3"]`. Der Browser nimmt das erste Format, das er abspielen kann (Safari braucht MP3 oder M4A). Welcher Track in welchem Abschnitt läuft, steht in der Tiled-Map beim jeweiligen Abschnitt (Eigenschaft `music`).
 

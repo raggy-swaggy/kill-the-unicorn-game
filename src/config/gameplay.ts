@@ -74,6 +74,8 @@ export const ENEMIES = {
 
 export const SCORE = {
   cassette: 50,
+  /** Every this many cassettes grant an extra life. */
+  cassettesPerLife: 10,
 };
 
 export const BOSS = {
