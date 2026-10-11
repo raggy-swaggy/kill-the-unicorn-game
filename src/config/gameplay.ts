@@ -43,3 +43,35 @@ export const CAMERA = {
   lookahead: 28,
   lookaheadLerp: 0.04,
 };
+
+export const HEALTH = {
+  heartsPerLife: 3,
+  lives: 3,
+  /** Blinking, untouchable time after taking a hit or respawning. */
+  invulnerableMs: 1200,
+  /** Input is ignored this long after a hit so the knockback reads clearly. */
+  hitStunMs: 180,
+  knockbackX: 130,
+  knockbackY: 170,
+};
+
+export const RIFF_SHOT = {
+  speed: 240,
+  cooldownMs: 230,
+  lifetimeMs: 650,
+  damage: 1,
+  maxOnScreen: 4,
+};
+
+export const ENEMIES = {
+  patrol: { hp: 2, score: 100, speed: 28 },
+  flyer: { hp: 1, score: 150, speed: 36, amplitude: 14, periodMs: 1600, patrolDistance: 64 },
+  shooter: { hp: 3, score: 200, rangeX: 150, rangeY: 48, fireIntervalMs: 1700, bulletSpeed: 95, bulletLifetimeMs: 2200 },
+  /** Enemies further than this from the camera centre are paused. */
+  activeDistance: 260,
+  hitFlashMs: 70,
+};
+
+export const SCORE = {
+  cassette: 50,
+};

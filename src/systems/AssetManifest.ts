@@ -7,6 +7,8 @@ export interface AssetManifest {
   tilemaps: { key: string; url: string }[];
   /** Tiled tileset name -> image key, used when a map is built. */
   tilesets: Record<string, string>;
+  /** Fixed-grid bitmap fonts: glyphs in `chars` order, `charsPerRow` per row. */
+  fonts: { key: string; image: string; width: number; height: number; charsPerRow: number; chars: string }[];
   animations: { key: string; sheet: string; frames: number[]; frameRate: number; repeat: number }[];
 }
 
@@ -36,5 +38,24 @@ export function createAnimations(scene: Phaser.Scene, manifest: AssetManifest): 
       frameRate: anim.frameRate,
       repeat: anim.repeat,
     });
+  }
+}
+
+export function createFonts(scene: Phaser.Scene, manifest: AssetManifest): void {
+  for (const font of manifest.fonts) {
+    if (scene.cache.bitmapFont.exists(font.key)) continue;
+    // Phaser's typings flatten spacing/offset into dotted keys; the runtime expects nested objects.
+    const config = {
+      image: font.image,
+      width: font.width,
+      height: font.height,
+      chars: font.chars,
+      charsPerRow: font.charsPerRow,
+      spacing: { x: 0, y: 0 },
+      offset: { x: 0, y: 0 },
+      lineSpacing: 1,
+    } as unknown as Phaser.Types.GameObjects.BitmapText.RetroFontConfig;
+    const data = Phaser.GameObjects.RetroFont.Parse(scene, config);
+    scene.cache.bitmapFont.add(font.key, data);
   }
 }

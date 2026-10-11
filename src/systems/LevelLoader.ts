@@ -38,3 +38,12 @@ export function loadLevel(scene: Phaser.Scene, mapKey: string): LoadedLevel {
 
   return { map, ground, spawn, objects };
 }
+
+/** Reads a custom property set on a Tiled object. */
+export function getProp<T extends string | number | boolean>(
+  obj: Phaser.Types.Tilemaps.TiledObject,
+  name: string,
+): T | undefined {
+  const props = obj.properties as { name: string; value: unknown }[] | undefined;
+  return props?.find((p) => p.name === name)?.value as T | undefined;
+}

@@ -218,6 +218,177 @@ function drawPlayerFrame(c, ox, frame) {
 }
 
 // ---------------------------------------------------------------------------
+// Enemies, 16x16 frames
+{
+  // Patrol: angry pop-up window on little legs. 0-1 walk.
+  const c = canvas(32, 16);
+  for (let f = 0; f < 2; f++) {
+    const x = f * 16;
+    c.rect(x + 1, 1, 14, 11, C.cyan);
+    c.rect(x + 2, 2, 12, 2, C.pink);
+    c.rect(x + 12, 2, 2, 2, C.white);
+    c.rect(x + 2, 4, 12, 7, C.void);
+    c.rect(x + 4, 6, 2, 2, C.pink); c.rect(x + 10, 6, 2, 2, C.pink);
+    c.rect(x + 4, 5, 3, 1, C.white); c.rect(x + 9, 5, 3, 1, C.white);
+    c.rect(x + 6, 9, 4, 1, C.hotpink);
+    const l = f === 0 ? 0 : 2;
+    c.rect(x + 4 - l / 2, 12, 2, 4 - l / 2, C.white);
+    c.rect(x + 10 + l / 2, 12, 2, 4 - l / 2, C.white);
+  }
+  save('sprites/enemy-popup.png', c);
+}
+{
+  // Flyer: mouse cursor with flapping wings. 0-1 flap.
+  const c = canvas(32, 16);
+  const arrow = ['#', '##', '#.#', '#..#', '#...#', '#....#', '#.....#', '#..####', '#.#', '##'];
+  for (let f = 0; f < 2; f++) {
+    const x = f * 16;
+    const wy = f === 0 ? 2 : 7;
+    c.rect(x + 9, wy, 6, 2, C.hotpink); c.rect(x + 11, wy + 2, 4, 1, C.pink);
+    c.rect(x + 0, wy, 4, 2, C.hotpink);
+    arrow.forEach((row, y) => [...row].forEach((ch, xx) => {
+      if (ch === '#') c.px(x + 4 + xx, 3 + y, C.void);
+      else if (ch === '.') c.px(x + 4 + xx, 3 + y, C.white);
+    }));
+    c.px(x + 6, 7, C.pink);
+  }
+  save('sprites/enemy-cursor.png', c);
+}
+{
+  // Shooter: cursed trading card with an eye. 0 idle, 1 shooting.
+  const c = canvas(32, 16);
+  for (let f = 0; f < 2; f++) {
+    const x = f * 16;
+    c.rect(x + 3, 0, 10, 16, C.pink);
+    c.rect(x + 4, 1, 8, 14, C.purple);
+    c.rect(x + 5, 2, 6, 6, C.deep);
+    c.rect(x + 5, 10, 6, 1, C.hotpink); c.rect(x + 5, 12, 4, 1, C.hotpink);
+    if (f === 0) { c.rect(x + 6, 4, 4, 2, C.white); c.rect(x + 7, 4, 2, 2, C.void); }
+    else { c.rect(x + 6, 3, 4, 4, C.white); c.rect(x + 7, 4, 2, 2, C.pink); }
+  }
+  save('sprites/enemy-card.png', c);
+}
+
+// Projectiles, 8x8 frames: 0-1 riff shot (music note), 2 enemy bullet
+{
+  const c = canvas(24, 8);
+  const note = (x, flag) => {
+    c.rect(x + 1, 5, 3, 2, C.cyan); c.rect(x + 3, 1, 1, 5, C.cyan);
+    c.rect(x + 4, 1, 2, 1, C.cyan); if (flag) c.rect(x + 5, 2, 2, 1, C.cyan);
+    c.px(x, 6, C.white);
+  };
+  note(0, false); note(8, true);
+  c.rect(17, 2, 4, 4, C.pink); c.rect(18, 1, 2, 6, C.pink); c.rect(18, 3, 2, 2, C.white);
+  save('sprites/projectiles.png', c);
+}
+
+// Pickups, 16x16 frames: 0-1 cassette, 2 heart
+{
+  const c = canvas(48, 16);
+  for (let f = 0; f < 2; f++) {
+    const x = f * 16;
+    c.rect(x + 1, 3, 14, 10, C.violet);
+    c.rect(x + 3, 5, 10, 4, C.white);
+    c.rect(x + 4, 6, 2, 2, C.void); c.rect(x + 10, 6, 2, 2, C.void);
+    c.rect(x + 4, 10, 8, 3, C.deep);
+    if (f === 1) { c.px(x + 2, 4, C.white); c.px(x + 13, 4, C.white); c.rect(x + 1, 3, 1, 3, C.white); }
+  }
+  const heart = ['.##.##.', '#######', '#######', '.#####.', '..###..', '...#...'];
+  heart.forEach((row, y) => [...row].forEach((ch, xx) => { if (ch === '#') { c.px(32 + 4 + xx, 5 + y, C.pink); c.px(32 + 4 + xx, 5 + y + 0, C.pink); } }));
+  c.px(37, 6, C.white);
+  save('sprites/pickups.png', c);
+}
+
+// HUD icons, 8x8 frames: 0 heart full, 1 heart empty, 2 cassette, 3 life (hood)
+{
+  const c = canvas(32, 8);
+  const heart = ['.##.##.', '#######', '#######', '.#####.', '..###..', '...#...'];
+  heart.forEach((row, y) => [...row].forEach((ch, xx) => {
+    if (ch !== '#') return;
+    c.px(xx, 1 + y, C.pink);
+    const edge = y === 0 || xx === 0 || xx === 6 || heart[y + 1]?.[xx] !== '#' || heart[y - 1]?.[xx] !== '#';
+    c.px(8 + xx, 1 + y, edge ? C.purple : C.void);
+  }));
+  c.px(1, 2, C.white);
+  c.rect(16, 1, 8, 6, C.violet); c.rect(17, 2, 6, 2, C.white); c.px(18, 3, C.void); c.px(21, 3, C.void);
+  c.rect(25, 0, 6, 8, C.purple); c.rect(26, 3, 4, 3, C.void); c.px(27, 4, C.pink); c.px(29, 4, C.pink);
+  save('ui/hud.png', c);
+}
+
+// Effects, 16x16 frames: 0-3 pop
+{
+  const c = canvas(64, 16);
+  [2, 4, 6, 7].forEach((r, f) => {
+    const x = f * 16 + 8, y = 8;
+    for (let a = 0; a < 8; a++) {
+      const ang = (a / 8) * Math.PI * 2;
+      const px = Math.round(x + Math.cos(ang) * r), py = Math.round(y + Math.sin(ang) * r);
+      c.rect(px, py, f < 3 ? 2 : 1, f < 3 ? 2 : 1, a % 2 ? C.cyan : C.pink);
+    }
+    if (f < 2) c.rect(x - 2 + f, y - 2 + f, 4 - f * 2, 4 - f * 2, C.white);
+  });
+  save('sprites/fx.png', c);
+}
+
+// Checkpoint, 16x32 frames: 0 inactive, 1 active (arcade joystick on a pole)
+{
+  const c = canvas(32, 32);
+  for (let f = 0; f < 2; f++) {
+    const x = f * 16;
+    const glow = f === 1 ? C.pink : C.purple;
+    c.rect(x + 7, 8, 2, 22, C.shadow);
+    c.rect(x + 4, 28, 8, 4, C.deep);
+    c.rect(x + 3, 2, 10, 7, glow);
+    c.rect(x + 5, 4, 6, 3, f === 1 ? C.white : C.deep);
+    if (f === 1) { c.rect(x + 1, 0, 2, 2, C.cyan); c.rect(x + 13, 0, 2, 2, C.cyan); }
+  }
+  save('sprites/checkpoint.png', c);
+}
+
+// Pixel font: 3x5 glyphs in 4x6 cells, 16 per row, Phaser RetroFont TEXT_SET2 order.
+{
+  const CHARS = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const G = {
+    '0': ['###', '#.#', '#.#', '#.#', '###'], '1': ['.#.', '##.', '.#.', '.#.', '###'],
+    '2': ['###', '..#', '###', '#..', '###'], '3': ['###', '..#', '.##', '..#', '###'],
+    '4': ['#.#', '#.#', '###', '..#', '..#'], '5': ['###', '#..', '###', '..#', '###'],
+    '6': ['###', '#..', '###', '#.#', '###'], '7': ['###', '..#', '.#.', '.#.', '.#.'],
+    '8': ['###', '#.#', '###', '#.#', '###'], '9': ['###', '#.#', '###', '..#', '###'],
+    A: ['.#.', '#.#', '###', '#.#', '#.#'], B: ['##.', '#.#', '##.', '#.#', '##.'],
+    C: ['.##', '#..', '#..', '#..', '.##'], D: ['##.', '#.#', '#.#', '#.#', '##.'],
+    E: ['###', '#..', '##.', '#..', '###'], F: ['###', '#..', '##.', '#..', '#..'],
+    G: ['.##', '#..', '#.#', '#.#', '.##'], H: ['#.#', '#.#', '###', '#.#', '#.#'],
+    I: ['###', '.#.', '.#.', '.#.', '###'], J: ['..#', '..#', '..#', '#.#', '.#.'],
+    K: ['#.#', '#.#', '##.', '#.#', '#.#'], L: ['#..', '#..', '#..', '#..', '###'],
+    M: ['#.#', '###', '###', '#.#', '#.#'], N: ['##.', '#.#', '#.#', '#.#', '#.#'],
+    O: ['.#.', '#.#', '#.#', '#.#', '.#.'], P: ['##.', '#.#', '##.', '#..', '#..'],
+    Q: ['.#.', '#.#', '#.#', '##.', '.##'], R: ['##.', '#.#', '##.', '#.#', '#.#'],
+    S: ['.##', '#..', '.#.', '..#', '##.'], T: ['###', '.#.', '.#.', '.#.', '.#.'],
+    U: ['#.#', '#.#', '#.#', '#.#', '###'], V: ['#.#', '#.#', '#.#', '#.#', '.#.'],
+    W: ['#.#', '#.#', '###', '###', '#.#'], X: ['#.#', '#.#', '.#.', '#.#', '#.#'],
+    Y: ['#.#', '#.#', '.#.', '.#.', '.#.'], Z: ['###', '..#', '.#.', '#..', '###'],
+    '!': ['.#.', '.#.', '.#.', '...', '.#.'], '?': ['##.', '..#', '.#.', '...', '.#.'],
+    '.': ['...', '...', '...', '...', '.#.'], ',': ['...', '...', '...', '.#.', '#..'],
+    ':': ['...', '.#.', '...', '.#.', '...'], ';': ['...', '.#.', '...', '.#.', '#..'],
+    '-': ['...', '...', '###', '...', '...'], '+': ['...', '.#.', '###', '.#.', '...'],
+    '/': ['..#', '..#', '.#.', '#..', '#..'], "'": ['.#.', '.#.', '...', '...', '...'],
+    '"': ['#.#', '#.#', '...', '...', '...'], '(': ['.#.', '#..', '#..', '#..', '.#.'],
+    ')': ['.#.', '..#', '..#', '..#', '.#.'], '=': ['...', '###', '...', '###', '...'],
+    '<': ['..#', '.#.', '#..', '.#.', '..#'], '>': ['#..', '.#.', '..#', '.#.', '#..'],
+    '*': ['#.#', '.#.', '#.#', '...', '...'], '#': ['#.#', '###', '#.#', '###', '#.#'],
+    '%': ['#.#', '..#', '.#.', '#..', '#.#'], '&': ['.#.', '#.#', '.#.', '#.#', '.##'],
+    '$': ['.##', '##.', '.#.', '.##', '##.'], '@': ['###', '#.#', '###', '#..', '###'],
+  };
+  const c = canvas(64, 24);
+  [...CHARS].forEach((ch, i) => {
+    const g = G[ch]; if (!g) return;
+    const ox = (i % 16) * 4, oy = Math.floor(i / 16) * 6;
+    g.forEach((row, y) => [...row].forEach((v, x) => { if (v === '#') c.px(ox + x, oy + y, C.white); }));
+  });
+  save('fonts/pixel.png', c);
+}
+
+// ---------------------------------------------------------------------------
 // Test level as Tiled JSON map. Tile values are Tiled gids (tile id + 1), 0 = empty.
 {
   const W = 160, H = 12;
@@ -254,18 +425,42 @@ function drawPlayerFrame(c, ox, frame) {
   block(159, 0, 1, 10);
 
   const prop = (name, value) => ({ name, type: 'bool', value });
+  // Entities are point objects; x/y is where the feet stand.
+  const objects = [];
+  const obj = (type, x, y, props = {}) => objects.push({
+    id: objects.length + 1, name: '', type, point: true, x, y, width: 0, height: 0, rotation: 0, visible: true,
+    properties: Object.entries(props).map(([name, value]) => ({ name, type: typeof value === 'number' ? 'int' : 'string', value })),
+  });
+  const T = 16;
+  obj('player-spawn', 40, 160);
+  obj('pickup', 9 * T, 140, { kind: 'cassette' });
+  obj('pickup', 31 * T, 116, { kind: 'cassette' });
+  obj('pickup', 52 * T, 112, { kind: 'cassette' });
+  obj('pickup', 86 * T, 80, { kind: 'cassette' });
+  obj('pickup', 125 * T, 48, { kind: 'cassette' });
+  obj('pickup', 72 * T, 150, { kind: 'heart' });
+  obj('enemy', 18 * T, 160, { enemyType: 'patrol' });
+  obj('enemy', 47 * T, 160, { enemyType: 'patrol' });
+  obj('enemy', 57 * T, 110, { enemyType: 'flyer', patrolDistance: 64 });
+  obj('enemy', 70 * T, 160, { enemyType: 'shooter' });
+  obj('enemy', 88 * T, 56, { enemyType: 'flyer', patrolDistance: 96 });
+  obj('enemy', 106 * T, 160, { enemyType: 'patrol' });
+  obj('enemy', 136 * T, 160, { enemyType: 'shooter' });
+  obj('enemy', 142 * T, 120, { enemyType: 'flyer', patrolDistance: 48 });
+  obj('checkpoint', 44 * T, 160);
+  obj('checkpoint', 112 * T, 160);
   const map = {
     compressionlevel: -1,
     width: W, height: H, tilewidth: 16, tileheight: 16,
     infinite: false, orientation: 'orthogonal', renderorder: 'right-down',
     tiledversion: '1.10.2', type: 'map', version: '1.10',
-    nextlayerid: 4, nextobjectid: 2,
+    nextlayerid: 4, nextobjectid: objects.length + 1,
     layers: [
       { id: 1, name: 'decor', type: 'tilelayer', x: 0, y: 0, width: W, height: H, opacity: 1, visible: true, data: decor },
       { id: 2, name: 'ground', type: 'tilelayer', x: 0, y: 0, width: W, height: H, opacity: 1, visible: true, data: ground },
       {
         id: 3, name: 'entities', type: 'objectgroup', draworder: 'topdown', x: 0, y: 0, opacity: 1, visible: true,
-        objects: [{ id: 1, name: 'player', type: 'player-spawn', point: true, x: 40, y: 160, width: 0, height: 0, rotation: 0, visible: true }],
+        objects,
       },
     ],
     tilesets: [{

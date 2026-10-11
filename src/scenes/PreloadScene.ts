@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { DISPLAY } from '../config/display';
 import { PALETTE } from '../config/palette';
-import { createAnimations, getManifest, queueManifest } from '../systems/AssetManifest';
+import { createAnimations, createFonts, getManifest, queueManifest } from '../systems/AssetManifest';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -20,7 +20,9 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create(): void {
-    createAnimations(this, getManifest(this));
+    const manifest = getManifest(this);
+    createAnimations(this, manifest);
+    createFonts(this, manifest);
     this.scene.start('Game');
   }
 }

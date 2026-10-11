@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import { PHYSICS, PLAYER } from '../config/gameplay';
+import { HEALTH, PHYSICS, PLAYER, RIFF_SHOT } from '../config/gameplay';
 import type { InputManager } from '../systems/InputManager';
+import type { Projectile } from './Projectile';
 
 function approach(value: number, target: number, step: number): number {
   return value < target ? Math.min(value + step, target) : Math.max(value - step, target);
@@ -13,8 +14,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private lastGroundedAt = -Infinity;
   private lastJumpPressedAt = -Infinity;
   private rising = false;
+  private lastShotAt = -Infinity;
+  private invulnerableUntil = 0;
+  private stunnedUntil = 0;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, private controls: InputManager) {
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    private controls: InputManager,
+    private shots: Phaser.Physics.Arcade.Group,
+  ) {
     super(scene, x, y, 'player', 0);
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -39,13 +49,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.controls.justPressed('jump')) this.lastJumpPressedAt = time;
 
     // Horizontal movement with acceleration, so starts and stops feel tight but not robotic.
-    const dir = this.controls.horizontal;
+    const stunned = time < this.stunnedUntil;
+    const dir = stunned ? 0 : this.controls.horizontal;
     const vx = body.velocity.x;
     let accel: number;
     if (dir !== 0 && Math.sign(vx) === -dir) accel = PLAYER.turnAccel;
     else if (grounded) accel = dir !== 0 ? PLAYER.groundAccel : PLAYER.groundDecel;
     else accel = dir !== 0 ? PLAYER.airAccel : PLAYER.airDecel;
-    body.setVelocityX(approach(vx, dir * PLAYER.runSpeed, accel * dt));
+    if (!stunned) body.setVelocityX(approach(vx, dir * PLAYER.runSpeed, accel * dt));
     if (dir !== 0) this.facing = dir as 1 | -1;
 
     // Jump: buffered presses and coyote time.
@@ -73,7 +84,40 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     else if (vy > 0) gravityScale = PLAYER.fallGravityMultiplier;
     body.setGravityY(PHYSICS.gravity * (gravityScale - 1));
 
+    if (!stunned && this.controls.isDown('attack') && time - this.lastShotAt >= RIFF_SHOT.cooldownMs) {
+      this.shoot(time);
+    }
+
     this.updateAnimation(grounded);
+    this.setAlpha(this.isInvulnerable && Math.floor(time / 70) % 2 === 0 ? 0.25 : 1);
+  }
+
+  private shoot(time: number): void {
+    const x = this.x + this.facing * 9;
+    const y = this.y - 15;
+    const shot = this.shots.get(x, y) as Projectile | null;
+    if (!shot) return;
+    this.lastShotAt = time;
+    shot.fire(x, y, this.facing, { anim: 'riff-shot', speed: RIFF_SHOT.speed, lifetimeMs: RIFF_SHOT.lifetimeMs });
+  }
+
+  get isInvulnerable(): boolean {
+    return this.scene.time.now < this.invulnerableUntil;
+  }
+
+  makeInvulnerable(ms = HEALTH.invulnerableMs): void {
+    this.invulnerableUntil = this.scene.time.now + ms;
+  }
+
+  /** Applies knockback away from the source. Returns false while invulnerable. */
+  hurt(sourceX: number): boolean {
+    if (this.isInvulnerable) return false;
+    const away = this.x < sourceX ? -1 : 1;
+    this.body.setVelocity(away * HEALTH.knockbackX, -HEALTH.knockbackY);
+    this.stunnedUntil = this.scene.time.now + HEALTH.hitStunMs;
+    this.rising = false;
+    this.makeInvulnerable();
+    return true;
   }
 
   private updateAnimation(grounded: boolean): void {
@@ -89,5 +133,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.lastGroundedAt = -Infinity;
     this.lastJumpPressedAt = -Infinity;
     this.rising = false;
+    this.stunnedUntil = 0;
+    this.makeInvulnerable();
   }
 }

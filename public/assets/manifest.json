@@ -2,10 +2,19 @@
   "images": [
     { "key": "tiles-arcade", "url": "tiles/arcade.png" },
     { "key": "bg-arcade-far", "url": "backgrounds/arcade-far.png" },
-    { "key": "bg-arcade-near", "url": "backgrounds/arcade-near.png" }
+    { "key": "bg-arcade-near", "url": "backgrounds/arcade-near.png" },
+    { "key": "font-pixel", "url": "fonts/pixel.png" }
   ],
   "spritesheets": [
-    { "key": "player", "url": "sprites/player.png", "frameWidth": 16, "frameHeight": 32 }
+    { "key": "player", "url": "sprites/player.png", "frameWidth": 16, "frameHeight": 32 },
+    { "key": "enemy-popup", "url": "sprites/enemy-popup.png", "frameWidth": 16, "frameHeight": 16 },
+    { "key": "enemy-cursor", "url": "sprites/enemy-cursor.png", "frameWidth": 16, "frameHeight": 16 },
+    { "key": "enemy-card", "url": "sprites/enemy-card.png", "frameWidth": 16, "frameHeight": 16 },
+    { "key": "projectiles", "url": "sprites/projectiles.png", "frameWidth": 8, "frameHeight": 8 },
+    { "key": "pickups", "url": "sprites/pickups.png", "frameWidth": 16, "frameHeight": 16 },
+    { "key": "fx", "url": "sprites/fx.png", "frameWidth": 16, "frameHeight": 16 },
+    { "key": "checkpoint", "url": "sprites/checkpoint.png", "frameWidth": 16, "frameHeight": 32 },
+    { "key": "hud", "url": "ui/hud.png", "frameWidth": 8, "frameHeight": 8 }
   ],
   "tilemaps": [
     { "key": "testlevel", "url": "maps/testlevel.json" }
@@ -13,10 +22,24 @@
   "tilesets": {
     "arcade": "tiles-arcade"
   },
+  "fonts": [
+    { "key": "pixel", "image": "font-pixel", "width": 4, "height": 6, "charsPerRow": 16, "chars": " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ" }
+  ],
   "animations": [
-    { "key": "player-idle", "sheet": "player", "frames": [0, 1], "frameRate": 3, "repeat": -1 },
-    { "key": "player-run", "sheet": "player", "frames": [2, 3, 4, 5], "frameRate": 10, "repeat": -1 },
-    { "key": "player-jump", "sheet": "player", "frames": [6], "frameRate": 1, "repeat": 0 },
-    { "key": "player-fall", "sheet": "player", "frames": [7], "frameRate": 1, "repeat": 0 }
+    { "key": "player-idle", "sheet": "player", "frames": [ 0, 1 ], "frameRate": 3, "repeat": -1 },
+    { "key": "player-run", "sheet": "player", "frames": [ 2, 3, 4, 5 ], "frameRate": 10, "repeat": -1 },
+    { "key": "player-jump", "sheet": "player", "frames": [ 6 ], "frameRate": 1, "repeat": 0 },
+    { "key": "player-fall", "sheet": "player", "frames": [ 7 ], "frameRate": 1, "repeat": 0 },
+    { "key": "enemy-popup-walk", "sheet": "enemy-popup", "frames": [ 0, 1 ], "frameRate": 6, "repeat": -1 },
+    { "key": "enemy-cursor-fly", "sheet": "enemy-cursor", "frames": [ 0, 1 ], "frameRate": 8, "repeat": -1 },
+    { "key": "enemy-card-idle", "sheet": "enemy-card", "frames": [ 0 ], "frameRate": 1, "repeat": 0 },
+    { "key": "enemy-card-shoot", "sheet": "enemy-card", "frames": [ 1 ], "frameRate": 1, "repeat": 0 },
+    { "key": "riff-shot", "sheet": "projectiles", "frames": [ 0, 1 ], "frameRate": 12, "repeat": -1 },
+    { "key": "enemy-bullet", "sheet": "projectiles", "frames": [ 2 ], "frameRate": 1, "repeat": 0 },
+    { "key": "pickup-cassette", "sheet": "pickups", "frames": [ 0, 0, 0, 1 ], "frameRate": 6, "repeat": -1 },
+    { "key": "pickup-heart", "sheet": "pickups", "frames": [ 2 ], "frameRate": 1, "repeat": 0 },
+    { "key": "fx-pop", "sheet": "fx", "frames": [ 0, 1, 2, 3 ], "frameRate": 20, "repeat": 0 },
+    { "key": "checkpoint-off", "sheet": "checkpoint", "frames": [ 0 ], "frameRate": 1, "repeat": 0 },
+    { "key": "checkpoint-on", "sheet": "checkpoint", "frames": [ 1 ], "frameRate": 1, "repeat": 0 }
   ]
 }
