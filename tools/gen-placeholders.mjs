@@ -43,6 +43,18 @@ function canvas(w, h) {
   return { png, px, rect, w, h };
 }
 
+// Adds a 1px dark outline around all opaque pixels, so sprites read against busy backgrounds.
+function outline(c, hex = C.void) {
+  const { png, w, h } = c;
+  const solid = (x, y) => x >= 0 && y >= 0 && x < w && y < h && png.data[(y * w + x) * 4 + 3] > 0;
+  const edge = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (solid(x, y)) continue;
+    if (solid(x - 1, y) || solid(x + 1, y) || solid(x, y - 1) || solid(x, y + 1)) edge.push([x, y]);
+  }
+  for (const [x, y] of edge) c.px(x, y, hex);
+}
+
 function save(rel, c) {
   const file = path.join(ROOT, rel);
   if (fs.existsSync(file) && !FORCE) { console.log(`skip  ${rel} (exists)`); return; }
@@ -235,6 +247,7 @@ function drawPlayerFrame(c, ox, frame) {
     c.rect(x + 4 - l / 2, 12, 2, 4 - l / 2, C.white);
     c.rect(x + 10 + l / 2, 12, 2, 4 - l / 2, C.white);
   }
+  outline(c);
   save('sprites/enemy-popup.png', c);
 }
 {
@@ -252,20 +265,24 @@ function drawPlayerFrame(c, ox, frame) {
     }));
     c.px(x + 6, 7, C.pink);
   }
+  outline(c);
   save('sprites/enemy-cursor.png', c);
 }
 {
   // Shooter: cursed trading card with an eye. 0 idle, 1 shooting.
+  // Light card face so it stands out against the dark purple backgrounds.
   const c = canvas(32, 16);
   for (let f = 0; f < 2; f++) {
     const x = f * 16;
-    c.rect(x + 3, 0, 10, 16, C.pink);
-    c.rect(x + 4, 1, 8, 14, C.purple);
-    c.rect(x + 5, 2, 6, 6, C.deep);
-    c.rect(x + 5, 10, 6, 1, C.hotpink); c.rect(x + 5, 12, 4, 1, C.hotpink);
-    if (f === 0) { c.rect(x + 6, 4, 4, 2, C.white); c.rect(x + 7, 4, 2, 2, C.void); }
-    else { c.rect(x + 6, 3, 4, 4, C.white); c.rect(x + 7, 4, 2, 2, C.pink); }
+    const border = f === 1 ? C.white : C.pink;
+    c.rect(x + 3, 1, 10, 14, border);
+    c.rect(x + 4, 2, 8, 12, C.hotpink);
+    c.rect(x + 5, 3, 6, 5, C.void);
+    c.rect(x + 5, 10, 6, 1, C.white); c.rect(x + 5, 12, 4, 1, C.white);
+    if (f === 0) { c.rect(x + 6, 4, 4, 2, C.cyan); c.rect(x + 7, 4, 2, 2, C.void); }
+    else { c.rect(x + 6, 4, 4, 3, C.white); c.rect(x + 7, 5, 2, 1, C.pink); }
   }
+  outline(c);
   save('sprites/enemy-card.png', c);
 }
 
@@ -278,7 +295,8 @@ function drawPlayerFrame(c, ox, frame) {
     c.px(x, 6, C.white);
   };
   note(0, false); note(8, true);
-  c.rect(17, 2, 4, 4, C.pink); c.rect(18, 1, 2, 6, C.pink); c.rect(18, 3, 2, 2, C.white);
+  c.rect(17, 2, 4, 4, C.pink); c.rect(18, 1, 2, 6, C.pink); c.rect(18, 2, 2, 4, C.white); c.rect(17, 3, 4, 2, C.white);
+  for (const [x, y] of [[16, 2], [16, 3], [16, 4], [16, 5], [21, 2], [21, 3], [21, 4], [21, 5], [17, 1], [20, 1], [17, 6], [20, 6], [18, 0], [19, 0], [18, 7], [19, 7]]) c.px(x, y, C.void);
   save('sprites/projectiles.png', c);
 }
 

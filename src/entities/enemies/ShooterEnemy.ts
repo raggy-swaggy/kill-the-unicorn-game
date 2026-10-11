@@ -12,7 +12,7 @@ export class ShooterEnemy extends Enemy {
   }
 
   setupBody(): void {
-    this.body.setSize(10, 16).setOffset(3, 0);
+    this.body.setSize(10, 14).setOffset(3, 1);
     this.body.setImmovable(true);
   }
 
