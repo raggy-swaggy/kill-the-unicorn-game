@@ -137,6 +137,21 @@ writeWav('music/boss.wav', loop(160, 8, (s, t, d, buf) => {
   if (lead[st] !== null) note(buf, t, d * 1.6, midi(lead[st] + (bar >= 4 ? 5 : 0)), { duty: 0.25, vol: 0.1, decay: 0.15 });
 }));
 
+// Title: slow, heavy intro groove, 100 BPM, E minor with a doomy lead
+writeWav('music/title.wav', loop(100, 8, (s, t, d, buf) => {
+  const bar = Math.floor(s / 16), st = s % 16;
+  const roots = [40, 40, 36, 38];
+  const root = roots[Math.floor(bar / 2) % 4];
+  if (st === 0 || st === 3 || st === 10) kick(buf, t, 0.6);
+  if (st === 8) snare(buf, t, 0.24);
+  if (st % 2 === 0) hat(buf, t, 0.04);
+  const chug = [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0];
+  if (chug[st]) note(buf, t, d * 0.8, midi(root - 12), { wave: 'square', duty: 0.3, vol: 0.16, decay: 0.1 });
+  if (st === 0) note(buf, t, d * 16, midi(root), { wave: 'saw', vol: 0.06 });
+  const lead = seq('71 . . . 72 . 71 . 67 . . . 64 . . .');
+  if (bar >= 4 && lead[st] !== null) note(buf, t, d * 3, midi(lead[st]), { duty: 0.25, vol: 0.1, decay: 0.35 });
+}));
+
 // ---------------------------------------------------------------------------
 // Sound effects
 function sfx(rel, seconds, fn) {
@@ -170,3 +185,8 @@ sfx('sfx/roar.wav', 1.0, (b) => { note(b, 0, 1, 110, { wave: 'saw', vol: 0.3, sl
 sfx('sfx/boss-die.wav', 1.5, (b) => { for (let i = 0; i < 10; i++) { kick(b, i * 0.12, 0.5); note(b, i * 0.12, 0.1, 1, { wave: 'noise', vol: 0.25, decay: 0.05 }); } note(b, 0, 1.5, 880, { duty: 0.5, vol: 0.12, slide: -0.9, decay: 0.8 }); });
 sfx('sfx/win.wav', 1.6, (b) => [60, 64, 67, 72, 67, 72, 76, 79].forEach((m, i) => note(b, i * 0.15, i === 7 ? 0.5 : 0.14, midi(m + 12), { duty: 0.25, vol: 0.22, decay: i === 7 ? 0.4 : 0.1 })));
 sfx('sfx/1up.wav', 0.6, (b) => [72, 76, 79, 84, 79, 84].forEach((m, i) => note(b, i * 0.08, i === 5 ? 0.2 : 0.08, midi(m + 12), { duty: 0.25, vol: 0.22, decay: i === 5 ? 0.15 : 0 })));
+// Menus
+sfx('sfx/menu-move.wav', 0.05, (b) => note(b, 0, 0.05, 1320, { duty: 0.5, vol: 0.15, decay: 0.02 }));
+sfx('sfx/menu-select.wav', 0.3, (b) => { note(b, 0, 0.08, 784, { duty: 0.25, vol: 0.22 }); note(b, 0.08, 0.2, 1568, { duty: 0.25, vol: 0.22, decay: 0.12 }); });
+sfx('sfx/countdown.wav', 0.12, (b) => note(b, 0, 0.12, 440, { duty: 0.125, vol: 0.2, decay: 0.05 }));
+sfx('sfx/game-over.wav', 2.0, (b) => [64, 63, 62, 61].forEach((m, i) => note(b, i * 0.38, i === 3 ? 1.0 : 0.34, midi(m), { wave: 'saw', vol: 0.25, decay: i === 3 ? 0.6 : 0.2, slide: i === 3 ? -0.15 : 0 })));

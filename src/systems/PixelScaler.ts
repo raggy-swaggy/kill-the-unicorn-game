@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { DISPLAY } from '../config/display';
+import { syncCrt } from './CrtFilter';
 
 /**
  * Scales the canvas to fill the window. Prefers whole-number zoom for crisp pixels,
@@ -11,8 +12,11 @@ export function installPixelScaler(game: Phaser.Game): void {
     const whole = Math.floor(fit);
     const zoom = whole >= 1 && whole / fit >= DISPLAY.integerZoomThreshold ? whole : fit;
     game.scale.setZoom(zoom);
+    // Centering happens after the zoom is applied; measure the canvas a frame later.
+    requestAnimationFrame(() => syncCrt(game.canvas, zoom));
   };
   apply();
   window.addEventListener('resize', apply);
   window.addEventListener('orientationchange', () => setTimeout(apply, 200));
+  document.addEventListener('fullscreenchange', () => setTimeout(apply, 100));
 }

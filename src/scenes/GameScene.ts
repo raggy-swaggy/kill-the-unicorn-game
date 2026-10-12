@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { AUDIO } from '../config/audio';
 import { BOSS, CAMERA, HEALTH, PHYSICS, RIFF_SHOT, SCORE } from '../config/gameplay';
 import { RHYTHM } from '../config/rhythm';
 import { DISPLAY } from '../config/display';
@@ -100,10 +99,17 @@ export class GameScene extends Phaser.Scene {
     cam.setDeadzone(CAMERA.deadzoneWidth, CAMERA.deadzoneHeight);
     this.updateSection(true);
 
-    this.input.keyboard!.on(`keydown-${AUDIO.muteKey}`, () => this.audio.toggleMute());
-
     this.scene.launch('UI');
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scene.stop('UI'));
+    const onContinue = () => this.continueGame();
+    // Leaving the tab or app (a phone call, the home button) opens the pause menu.
+    const onHidden = () => this.openPause();
+    this.game.events.on('continue', onContinue);
+    this.game.events.on(Phaser.Core.Events.HIDDEN, onHidden);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.game.events.off('continue', onContinue);
+      this.game.events.off(Phaser.Core.Events.HIDDEN, onHidden);
+      this.scene.stop('UI');
+    });
   }
 
   private spawnEntities(ctx: EnemyContext): void {
@@ -258,13 +264,38 @@ export class GameScene extends Phaser.Scene {
     this.updateSection(true);
   }
 
-  /** Placeholder until the GameOver scene with CONTINUE countdown arrives in milestone 5. */
   private triggerGameOver(): void {
     this.gameOver = true;
     this.physics.pause();
     this.player.setVisible(false);
-    this.game.events.emit('game-over');
-    this.time.delayedCall(2500, () => this.scene.restart());
+    this.audio.stopMusic(300);
+    this.audio.sfx('game-over');
+    this.time.delayedCall(1500, () => {
+      this.scene.pause('UI');
+      this.scene.launch('GameOver', { score: this.registry.get(STATE.score) });
+      this.scene.pause();
+    });
+  }
+
+  /** CONTINUE: back at the last checkpoint with full lives, score reset to 0. */
+  private continueGame(): void {
+    this.registry.set(STATE.score, 0);
+    this.registry.set(STATE.lives, HEALTH.lives);
+    this.registry.set(STATE.hearts, HEALTH.heartsPerLife);
+    this.player.respawn(this.respawnPoint.x, this.respawnPoint.y);
+    this.player.setVisible(true);
+    this.physics.resume();
+    this.gameOver = false;
+    this.cameras.main.flash(300, 41, 231, 255);
+    if (this.section) this.audio.playMusic(this.section.music, this.boss?.phase === 2 ? BOSS.phase2MusicRate : 1);
+    this.updateSection(true);
+  }
+
+  private openPause(): void {
+    if (this.gameOver || this.won || !this.scene.isActive()) return;
+    this.scene.pause('UI');
+    this.scene.launch('Pause');
+    this.scene.pause();
   }
 
   /** Moves the player to another section through a cursed cabinet (glitch) or a portal (fade). */
@@ -402,6 +433,7 @@ export class GameScene extends Phaser.Scene {
   update(time: number, delta: number): void {
     if (this.gameOver || this.transitioning) return;
     this.inputs.update();
+    if (this.inputs.justPressed('start')) return this.openPause();
     this.player.update(time, delta);
     for (const enemy of this.enemies.getChildren()) (enemy as Enemy).update(time, delta);
     for (const pickup of this.pickups.getChildren()) (pickup as Pickup).update(time);

@@ -4,6 +4,7 @@ import { HEALTH } from '../config/gameplay';
 import { PALETTE } from '../config/palette';
 import { STATE } from '../systems/GameState';
 import { pixelText } from '../ui/pixelText';
+import { TouchControls } from '../ui/TouchControls';
 
 const FONT = 'pixel';
 
@@ -34,23 +35,23 @@ export class UIScene extends Phaser.Scene {
     this.bossLabel = pixelText(this, DISPLAY.width / 2, 7, 'THE UNICORN', { tint: PALETTE.hotpink });
     this.bossBar = this.add.graphics();
 
-    const hint = pixelText(this, DISPLAY.width / 2, DISPLAY.height - 7, 'ARROWS/WASD MOVE  SPACE JUMP  J/X RIFF  M MUTE', {
-      tint: PALETTE.hotpink,
-    });
-    this.tweens.add({ targets: hint, alpha: 0, delay: 6000, duration: 800 });
+    new TouchControls(this, 'game');
+    if (!TouchControls.active) {
+      const hint = pixelText(this, DISPLAY.width / 2, DISPLAY.height - 7, 'ARROWS/WASD MOVE  SPACE JUMP  J/X RIFF  ESC PAUSE', {
+        tint: PALETTE.hotpink,
+      });
+      this.tweens.add({ targets: hint, alpha: 0, delay: 6000, duration: 800 });
+    }
 
     this.refresh();
     const onChange = () => this.refresh();
     this.registry.events.on('changedata', onChange);
-    const onGameOver = () => this.showGameOver();
     const onBanner = (text: string) => this.showBanner(text);
     const onGlitch = (ms: number) => this.glitch(ms);
-    this.game.events.on('game-over', onGameOver);
     this.game.events.on('banner', onBanner);
     this.game.events.on('glitch', onGlitch);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.registry.events.off('changedata', onChange);
-      this.game.events.off('game-over', onGameOver);
       this.game.events.off('banner', onBanner);
       this.game.events.off('glitch', onGlitch);
     });
@@ -118,9 +119,5 @@ export class UIScene extends Phaser.Scene {
       timer.remove();
       bars.destroy();
     });
-  }
-
-  private showGameOver(): void {
-    pixelText(this, DISPLAY.width / 2, DISPLAY.height / 2, 'GAME OVER', { scale: 2, tint: PALETTE.pink });
   }
 }

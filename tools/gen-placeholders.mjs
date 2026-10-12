@@ -538,6 +538,52 @@ tileset('tiles/catacombs.png', [
     g.forEach((row, y) => [...row].forEach((v, x) => { if (v === '#') c.px(ox + x, oy + y, C.white); }));
   });
   save('fonts/pixel.png', c);
+
+  // Writes text with the font glyphs above, `scale` pixels per glyph pixel.
+  const write = (cv, text, x, y, hex, scale = 1) => [...text].forEach((ch, i) => (G[ch] ?? []).forEach((row, gy) =>
+    [...row].forEach((v, gx) => { if (v === '#') cv.rect(x + (i * 4 + gx) * scale, y + gy * scale, scale, scale, hex); })));
+
+  // Band logo placeholder for the title screen, 160x48. Replace ui/logo.png with the official logo.
+  {
+    const lc = canvas(160, 48);
+    for (let x = 0; x < 160; x++) if (x % 6 < 4) { lc.px(x, 0, C.hotpink); lc.px(x, 47, C.hotpink); }
+    for (let y = 0; y < 48; y++) if (y % 6 < 4) { lc.px(0, y, C.hotpink); lc.px(159, y, C.hotpink); }
+    lc.rect(2, 2, 156, 44, C.night, 200);
+    write(lc, 'BAND LOGO', 80 - 9 * 4 * 3 / 2, 10, C.pink, 3);
+    write(lc, 'PLACEHOLDER', 80 - 11 * 4 / 2, 32, C.white);
+    save('ui/logo.png', lc);
+  }
+
+  // Touch buttons, 24x24 frames: 0 left, 1 right, 2 up, 3 down, 4 jump, 5 riff, 6 pause
+  {
+    const tc = canvas(7 * 24, 24);
+    const R = 11.5;
+    const arrow = (ox, dir) => {
+      for (let i = 0; i < 6; i++) {
+        const len = 1 + i * 2;
+        for (let j = 0; j < len; j++) {
+          const a = 9 + i, b = 12 - i + j;
+          if (dir === 'left') tc.px(ox + a - 2, b, C.white);
+          if (dir === 'right') tc.px(ox + 23 - a + 2, b, C.white);
+          if (dir === 'up') tc.px(ox + b, a - 2, C.white);
+          if (dir === 'down') tc.px(ox + b, 23 - a + 2, C.white);
+        }
+      }
+    };
+    for (let f = 0; f < 7; f++) {
+      const ox = f * 24;
+      const ring = f >= 4 && f < 6 ? (f === 4 ? C.cyan : C.pink) : C.violet;
+      for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) {
+        const d = Math.hypot(x + 0.5 - 12, y + 0.5 - 12);
+        if (d <= R) tc.px(ox + x, y, d > R - 1.5 ? ring : C.deep, d > R - 1.5 ? 255 : 170);
+      }
+    }
+    arrow(0, 'left'); arrow(24, 'right'); arrow(48, 'up'); arrow(72, 'down');
+    write(tc, 'A', 96 + 9, 7, C.cyan, 2);
+    write(tc, 'B', 120 + 9, 7, C.pink, 2);
+    tc.rect(144 + 8, 7, 3, 10, C.white); tc.rect(144 + 13, 7, 3, 10, C.white);
+    save('ui/touch.png', tc);
+  }
 }
 
 // ---------------------------------------------------------------------------

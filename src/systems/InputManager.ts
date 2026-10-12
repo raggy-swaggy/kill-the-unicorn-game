@@ -1,19 +1,29 @@
 import Phaser from 'phaser';
 import { GAMEPAD, KEYBOARD } from '../config/controls';
 
-export type Action = 'left' | 'right' | 'up' | 'down' | 'jump' | 'attack';
-const ACTIONS: Action[] = ['left', 'right', 'up', 'down', 'jump', 'attack'];
+export type Action = 'left' | 'right' | 'up' | 'down' | 'jump' | 'attack' | 'start';
+export const ACTIONS: Action[] = ['left', 'right', 'up', 'down', 'jump', 'attack', 'start'];
+
+/** Actions currently held on on-screen touch buttons, one set per active TouchControls. */
+const touchSources = new Set<Set<Action>>();
+
+export function registerTouchSource(source: Set<Action>): () => void {
+  touchSources.add(source);
+  return () => touchSources.delete(source);
+}
+
+const touchHeld = (action: Action) => [...touchSources].some((s) => s.has(action));
 
 /**
- * Merges keyboard, gamepad and (later) touch buttons into one input state.
+ * Merges keyboard, gamepad and touch buttons into one input state.
  * Call update() once per frame before reading.
  */
 export class InputManager {
   private keys: Record<Action, Phaser.Input.Keyboard.Key[]>;
   private held = new Set<Action>();
   private prevHeld = new Set<Action>();
-  /** Set by on-screen touch buttons. */
-  readonly virtual = new Set<Action>();
+  private nextRepeat = new Map<Action, number>();
+  private seenTimeDown = new Map<Phaser.Input.Keyboard.Key, number>();
 
   constructor(private scene: Phaser.Scene) {
     const keyboard = scene.input.keyboard!;
@@ -30,7 +40,13 @@ export class InputManager {
     this.held.clear();
 
     for (const action of ACTIONS) {
-      if (this.keys[action].some((key) => key.isDown) || this.virtual.has(action)) this.held.add(action);
+      // A new timeDown also catches taps shorter than a frame, where down and up arrive together.
+      const key = this.keys[action].some((k) => {
+        const tapped = k.timeDown !== (this.seenTimeDown.get(k) ?? k.timeDown);
+        this.seenTimeDown.set(k, k.timeDown);
+        return k.isDown || tapped;
+      });
+      if (key || touchHeld(action)) this.held.add(action);
     }
 
     const pad = this.scene.input.gamepad?.pad1;
@@ -42,6 +58,7 @@ export class InputManager {
       if (pad.down || pad.leftStick.y > dz) this.held.add('down');
       if (GAMEPAD.jump.some((i) => pad.buttons[i]?.pressed)) this.held.add('jump');
       if (GAMEPAD.attack.some((i) => pad.buttons[i]?.pressed)) this.held.add('attack');
+      if (GAMEPAD.start.some((i) => pad.buttons[i]?.pressed)) this.held.add('start');
     }
   }
 
@@ -52,6 +69,26 @@ export class InputManager {
   /** True only in the frame the action went down. */
   justPressed(action: Action): boolean {
     return this.held.has(action) && !this.prevHeld.has(action);
+  }
+
+  /** Like justPressed, but fires again while held (menu cursor movement). */
+  repeated(action: Action, delay = 320, interval = 90): boolean {
+    const now = this.scene.time.now;
+    if (this.justPressed(action)) {
+      this.nextRepeat.set(action, now + delay);
+      return true;
+    }
+    const next = this.nextRepeat.get(action);
+    if (this.isDown(action) && next !== undefined && now >= next) {
+      this.nextRepeat.set(action, now + interval);
+      return true;
+    }
+    return false;
+  }
+
+  /** Confirm in menus: jump, attack or start. */
+  get confirmPressed(): boolean {
+    return this.justPressed('jump') || this.justPressed('attack') || this.justPressed('start');
   }
 
   /** -1, 0 or 1. Pressing both directions cancels out. */

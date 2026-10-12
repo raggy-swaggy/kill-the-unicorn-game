@@ -4,16 +4,44 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#07061a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <title>Kill the Unicorn – Cursed Arcade</title>
     <style>
       html, body { margin: 0; height: 100%; background: #07061a; overflow: hidden; touch-action: none; }
       #game { width: 100vw; height: 100vh; height: 100dvh; }
       canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+      body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+      /* CRT filter: one dark scanline per game pixel row (--px = zoom), plus vignette. */
+      #crt { position: fixed; pointer-events: none; z-index: 2; display: none; --px: 4px; }
+      body.crt #crt { display: block; }
+      #crt::before, #crt::after { content: ''; position: absolute; inset: 0; }
+      #crt::before {
+        background: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--px) * 0.6), rgba(0, 0, 0, 0.32) calc(var(--px) * 0.6), rgba(0, 0, 0, 0.32) var(--px));
+        animation: crt-flicker 0.12s infinite alternate;
+      }
+      #crt::after { background: radial-gradient(ellipse at center, transparent 55%, rgba(7, 6, 26, 0.55) 100%); box-shadow: inset 0 0 calc(var(--px) * 6) rgba(41, 231, 255, 0.12); }
+      body.crt canvas { filter: saturate(1.15) brightness(1.12) contrast(1.05); }
+      @keyframes crt-flicker { from { opacity: 0.92; } to { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { #crt::before { animation: none; } }
+
+      /* Rotate hint for phones held upright. */
+      #rotate { display: none; position: fixed; inset: 0; z-index: 3; background: #07061a; color: #ff2e97;
+        font: bold 16px/1.4 monospace; letter-spacing: 2px; text-align: center; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+      #rotate svg { width: 64px; height: 64px; animation: rotate-hint 1.6s ease-in-out infinite; }
+      @keyframes rotate-hint { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+      @media (orientation: portrait) and (pointer: coarse) { #rotate { display: flex; } }
     </style>
   </head>
   <body>
-    <div id="game"></div>
+    <div id="game"><div id="crt"></div></div>
+    <div id="rotate">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#29e7ff" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2" /><line x1="11" y1="18" x2="13" y2="18" /></svg>
+      ROTATE YOUR DEVICE
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

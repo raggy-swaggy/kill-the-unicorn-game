@@ -9,7 +9,8 @@
     { "key": "bg-datahighway-near", "url": "backgrounds/datahighway-near.png" },
     { "key": "bg-catacombs-far", "url": "backgrounds/catacombs-far.png" },
     { "key": "bg-catacombs-near", "url": "backgrounds/catacombs-near.png" },
-    { "key": "font-pixel", "url": "fonts/pixel.png" }
+    { "key": "font-pixel", "url": "fonts/pixel.png" },
+    { "key": "logo", "url": "ui/logo.png" }
   ],
   "spritesheets": [
     { "key": "player", "url": "sprites/player.png", "frameWidth": 16, "frameHeight": 32 },
@@ -21,6 +22,7 @@
     { "key": "fx", "url": "sprites/fx.png", "frameWidth": 16, "frameHeight": 16 },
     { "key": "checkpoint", "url": "sprites/checkpoint.png", "frameWidth": 16, "frameHeight": 32 },
     { "key": "hud", "url": "ui/hud.png", "frameWidth": 8, "frameHeight": 8 },
+    { "key": "touch", "url": "ui/touch.png", "frameWidth": 24, "frameHeight": 24 },
     { "key": "cursed-cabinet", "url": "sprites/cursed-cabinet.png", "frameWidth": 32, "frameHeight": 48 },
     { "key": "portal", "url": "sprites/portal.png", "frameWidth": 16, "frameHeight": 32 },
     { "key": "beat-platform", "url": "sprites/beat-platform.png", "frameWidth": 16, "frameHeight": 8 },
@@ -44,6 +46,7 @@
     { "key": "music-datahighway", "urls": [ "audio/music/datahighway.wav" ] },
     { "key": "music-catacombs", "urls": [ "audio/music/catacombs.wav" ] },
     { "key": "music-boss", "urls": [ "audio/music/boss.wav" ] },
+    { "key": "music-title", "urls": [ "audio/music/title.wav" ] },
     { "key": "sfx-jump", "urls": [ "audio/sfx/jump.wav" ] },
     { "key": "sfx-shoot", "urls": [ "audio/sfx/shoot.wav" ] },
     { "key": "sfx-enemy-hit", "urls": [ "audio/sfx/enemy-hit.wav" ] },
@@ -62,7 +65,11 @@
     { "key": "sfx-roar", "urls": [ "audio/sfx/roar.wav" ] },
     { "key": "sfx-boss-die", "urls": [ "audio/sfx/boss-die.wav" ] },
     { "key": "sfx-win", "urls": [ "audio/sfx/win.wav" ] },
-    { "key": "sfx-1up", "urls": [ "audio/sfx/1up.wav" ] }
+    { "key": "sfx-1up", "urls": [ "audio/sfx/1up.wav" ] },
+    { "key": "sfx-menu-move", "urls": [ "audio/sfx/menu-move.wav" ] },
+    { "key": "sfx-menu-select", "urls": [ "audio/sfx/menu-select.wav" ] },
+    { "key": "sfx-countdown", "urls": [ "audio/sfx/countdown.wav" ] },
+    { "key": "sfx-game-over", "urls": [ "audio/sfx/game-over.wav" ] }
   ],
   "animations": [
     { "key": "player-idle", "sheet": "player", "frames": [ 0, 1 ], "frameRate": 3, "repeat": -1 },

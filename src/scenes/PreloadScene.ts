@@ -23,6 +23,6 @@ export class PreloadScene extends Phaser.Scene {
     const manifest = getManifest(this);
     createAnimations(this, manifest);
     createFonts(this, manifest);
-    this.scene.start('Game');
+    this.scene.start('Title');
   }
 }

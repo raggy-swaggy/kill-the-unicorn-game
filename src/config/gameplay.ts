@@ -94,3 +94,20 @@ export const BOSS = {
   spread: { count: 5, countPhase2: 7, speed: 105, angleDeg: 70, bursts: 1, burstsPhase2: 2, lifetimeMs: 3000 },
   hitFlashMs: 60,
 };
+
+export const CONTINUE = {
+  /** Seconds to decide on CONTINUE? after the last life is lost. */
+  seconds: 10,
+};
+
+export const HIGHSCORE = {
+  /** Number of entries kept in the table. */
+  entries: 10,
+  /** localStorage key; change it to reset everyone's table after a balance change. */
+  storageKey: 'ktu-highscores-v1',
+  /** Initial table, so the list never starts empty. */
+  defaults: [
+    ['KTU', 20000], ['UNI', 15000], ['RIF', 12000], ['CHG', 10000], ['BRK', 8000],
+    ['GLT', 6000], ['AMP', 5000], ['BPM', 4000], ['PIT', 3000], ['CRT', 2000],
+  ] as [string, number][],
+};

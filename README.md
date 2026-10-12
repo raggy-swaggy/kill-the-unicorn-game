@@ -4,7 +4,7 @@ Kurzes Retro-Jump'n'Run als Fan-Gimmick für die Band Kill the Unicorn. Läuft i
 
 Gebaut mit [Phaser 4](https://phaser.io), TypeScript und Vite. Interne Auflösung 320x180 Pixel.
 
-> Stand: Meilenstein 4 (komplettes Level 1, Rhythmus-Mechanik, Bossfight, Win-Screen). Touch-Steuerung, Titelbild, Game Over mit Continue, Highscore und CRT-Filter folgen in Meilenstein 5. Die README wird mit jedem Meilenstein ergänzt.
+> Stand: Meilenstein 5 (komplettes Spiel mit Titelbild, Pause, Game Over mit Continue, Highscore, Touch-Steuerung und CRT-Filter). Die ausführliche Build- und Deployment-Anleitung folgt in Meilenstein 6.
 
 ## Lokal starten
 
@@ -20,14 +20,29 @@ Mit `?debug` hinter der Adresse werden die Physik-Hitboxen angezeigt.
 
 ## Steuerung
 
-| Aktion | Tastatur | Gamepad |
-|---|---|---|
-| Laufen | Pfeiltasten links/rechts oder A/D | Steuerkreuz oder linker Stick |
-| Springen | Leertaste (kurz drücken = kleiner Sprung) | A / Kreuz |
-| Riff Shot (gedrückt halten = Dauerfeuer) | J oder X | X / Viereck oder B / Kreis |
-| Ton an/aus | M | |
+| Aktion | Tastatur | Gamepad | Touch |
+|---|---|---|---|
+| Laufen | Pfeiltasten links/rechts oder A/D | Steuerkreuz oder linker Stick | Pfeile unten links |
+| Springen | Leertaste (kurz drücken = kleiner Sprung) | A / Kreuz | Knopf A |
+| Riff Shot (gedrückt halten = Dauerfeuer) | J oder X | X / Viereck oder B / Kreis | Knopf B |
+| Pause | Esc, P oder Enter | Start | Pause-Knopf unten Mitte |
+| Ton an/aus | M | | im Pausenmenü |
+| CRT-Filter an/aus | C | | im Pausenmenü |
+| Vollbild | F | | im Pausenmenü (nicht auf dem iPhone) |
 
-Die Belegung steht in `src/config/controls.ts`.
+In Menüs: hoch/runter wählen, Springen oder Riff bestätigen. Bei der Highscore-Eingabe wählt hoch/runter den Buchstaben, Springen geht zum nächsten, links zurück.
+
+Die Touch-Knöpfe erscheinen nur auf Touch-Geräten (oder sobald jemand den Bildschirm berührt) und erkennen mehrere Finger gleichzeitig. Hält man das Handy hochkant, pausiert das Spiel und bittet ums Drehen. Ton- und CRT-Einstellung werden im Browser gespeichert.
+
+Belegung und Position der Touch-Knöpfe stehen in `src/config/controls.ts`.
+
+## Ablauf
+
+Titelbild (wechselt alle paar Sekunden mit der Highscore-Liste) → Level 1 → Boss → Siegerbild mit Highscore-Eingabe → Titelbild.
+
+Wer alle Leben verliert, sieht GAME OVER. Reicht die Punktzahl für die Top 10, gibt man zuerst drei Initialen ein. Danach läuft der CONTINUE?-Countdown: Wer bestätigt, spielt am letzten Checkpoint mit vollen Leben weiter, der Punktestand beginnt wieder bei 0. Continues sind unbegrenzt. Läuft der Countdown ab, geht es zurück zum Titelbild.
+
+Die Highscores liegen im `localStorage` des Browsers, also pro Gerät und Browser.
 
 ## Bauen
 
@@ -54,6 +69,10 @@ Alle Werte für das Spielgefühl stehen zentral in `src/config/gameplay.ts`:
 - `ENEMIES`: Lebenspunkte, Punkte und Verhalten pro Gegnertyp
 - `SCORE`: Punkte pro Kassette (`cassette`) und wie viele Kassetten ein Extraleben geben (`cassettesPerLife`, Standard 10). Level 1 enthält 20 Kassetten, also maximal 2 Extraleben.
 - `BOSS`: Lebenspunkte des Einhorns, Punkte, Tempo der zweiten Phase, Timing der Angriffe (Laser, Stampfen, Glitzer-Salve)
+- `CONTINUE`: Dauer des CONTINUE?-Countdowns in Sekunden
+- `HIGHSCORE`: Anzahl Einträge, Start-Einträge der Liste und der Speicher-Schlüssel. Wer `storageKey` ändert (z. B. auf `ktu-highscores-v2`), setzt die Liste bei allen Spielern zurück.
+
+Lautstärken stehen in `src/config/audio.ts`. Der CRT-Filter (Scanlines und Vignette) ist reines CSS in `index.html` (`#crt`) und lässt sich dort in Stärke und Farbe anpassen.
 
 Tempo und Breakdowns der Musik stehen in `src/config/rhythm.ts` (siehe unten).
 
@@ -93,6 +112,8 @@ Alle Grafiken liegen in `public/assets/`. Welche Datei wofür verwendet wird, st
 | `sprites/checkpoint.png` | Checkpoint, 2 Frames à 16x32: 0 aus, 1 aktiv |
 | `sprites/fx.png` | Treffer-Effekt, 4 Frames à 16x16 |
 | `ui/hud.png` | HUD-Icons 8x8: 0 Herz voll, 1 Herz leer, 2 Kassette, 3 Leben |
+| `ui/logo.png` | Bandlogo auf dem Titelbild, 160x48 (aktuell Platzhalter). Ein anderes Format geht auch, es wird zentriert. |
+| `ui/touch.png` | Touch-Knöpfe, 7 Frames à 24x24: 0 links, 1 rechts, 2 hoch, 3 runter, 4 Springen (A), 5 Riff (B), 6 Pause |
 | `fonts/pixel.png` | Pixel-Schrift, Zeichen à 4x6 in einem Raster mit 16 Zeichen pro Zeile, Reihenfolge wie `chars` im Manifest. Weiss zeichnen, die Farbe setzt das Spiel. |
 
 Animationen (welche Frames, wie schnell) werden ebenfalls im Manifest unter `animations` eingestellt.
@@ -105,7 +126,8 @@ Animationen (welche Frames, wie schnell) werden ebenfalls im Manifest unter `ani
 | `audio/music/datahighway.wav` | Abschnitt 2, Datenautobahn |
 | `audio/music/catacombs.wav` | Abschnitt 3, Katakomben |
 | `audio/music/boss.wav` | Bossfight (läuft in der zweiten Phase etwas schneller) |
-| `audio/sfx/*.wav` | Soundeffekte: jump, shoot, enemy-hit, enemy-die, hurt, pickup, heart, checkpoint, glitch, portal, lose-life, boss-hit, laser-charge, laser, stomp, roar, boss-die, win, 1up |
+| `audio/music/title.wav` | Titelbild |
+| `audio/sfx/*.wav` | Soundeffekte: jump, shoot, enemy-hit, enemy-die, hurt, pickup, heart, checkpoint, glitch, portal, lose-life, boss-hit, laser-charge, laser, stomp, roar, boss-die, win, 1up, menu-move, menu-select, countdown, game-over |
 
 Musik läuft in Endlosschleife, die Datei sollte also nahtlos loopen. Für echte Tracks empfehle ich MP3 oder OGG statt WAV (viel kleiner). Dazu die Datei ablegen und im Manifest unter `audio` die `urls` anpassen, z. B. `["audio/music/arcade.ogg", "audio/music/arcade.mp3"]`. Der Browser nimmt das erste Format, das er abspielen kann (Safari braucht MP3 oder M4A). Welcher Track in welchem Abschnitt läuft, steht in der Tiled-Map beim jeweiligen Abschnitt (Eigenschaft `music`).
 
@@ -155,8 +177,9 @@ Neue Tilesets bitte als PNG nach `public/assets/tiles/` legen, in der Map einbet
 ```
 public/assets/   austauschbare Assets + manifest.json
 src/config/      Spielwerte, Steuerung, Palette, Anzeige
-src/scenes/      Boot, Preload, Game, UI, Win (weitere folgen)
+src/scenes/      Boot, Preload, Title, Game, UI (HUD), Pause, GameOver, Win
 src/entities/    Spielfigur, Gegner, Boss, Schüsse, Pickups, Checkpoints, Portale, Takt-Plattformen
-src/systems/     Eingabe, Level-Loader, Asset-Manifest, Spielstand, Audio, Beat-Clock, Skalierung
+src/systems/     Eingabe, Level-Loader, Asset-Manifest, Spielstand, Audio, Beat-Clock, Skalierung, Highscores, Einstellungen, CRT
+src/ui/          Pixel-Text, Touch-Knöpfe, Initialen-Eingabe, Highscore-Liste
 tools/           Generatoren für Platzhalter-Grafiken, -Audio und das Start-Layout von Level 1
 ```
